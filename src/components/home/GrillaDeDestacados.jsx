@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-export default function FeaturedGrid({ items = [], loading }) {
+export default function GrillaDeDestacados({ listaProductosDestacados = [], loadingCarga }) {
   return (
     <section className="container mb-4">
       <div className="d-flex justify-content-between align-items-end mb-3">
@@ -12,8 +12,9 @@ export default function FeaturedGrid({ items = [], loading }) {
       </div>
 
       <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-        {loading ? Array.from({length:3}).map((_,i)=>(
-          <div className="col" key={i}><div className="card h-100 placeholder-glow">
+        {loadingCarga ? Array.from({length:3}).map((_,i)=>(
+          <div className="col" key={i}>
+            <div className="card h-100 placeholder-glow">
             <div className="ratio ratio-4x3 placeholder"></div>
             <div className="card-body">
               <h5 className="card-title"><span className="placeholder col-6"></span></h5>
@@ -21,17 +22,18 @@ export default function FeaturedGrid({ items = [], loading }) {
               <button className="btn btn-secondary disabled placeholder col-5">&nbsp;</button>
             </div>
           </div></div>
-        )) : items.map(p => (
-          <div className="col" key={p.id}>
+        )) : listaProductosDestacados.map(prod => (
+          <div className="col" key={prod.id}>
             <div className="card h-100">
               <div className="ratio ratio-4x3">
-                <img src={p.image_path?.startsWith('/') ? p.image_path : `/${p.image_path}`} className="card-img-top object-fit-cover" alt={p.name}/>
+                <img src={prod.image_path?.startsWith('/') ? prod.image_path : `/${prod.image_path}`}
+                 className="card-img-top object-fit-cover" alt={prod.name}/>
               </div>
               <div className="card-body d-flex flex-column">
-                <h5 className="card-title">{p.name}</h5>
-                <p className="text-muted mb-2">Desde ${p.price?.toLocaleString('es-CL')}</p>
+                <h5 className="card-title">{prod.name}</h5>
+                <p className="text-muted mb-2">Desde ${prod.price?.toLocaleString('es-CL')}</p>
                 <div className="mt-auto">
-                  <Link to={`/producto/${p.id}`} className="btn btn-primary">Comprar ahora</Link>
+                  <Link to={`/producto/${prod.id}`} className="btn btn-primary">Comprar ahora</Link>
                 </div>
               </div>
             </div>

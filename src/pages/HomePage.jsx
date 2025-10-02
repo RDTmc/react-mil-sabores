@@ -1,19 +1,19 @@
 import Hero from '../components/home/Hero'
 import Benefits from '../components/home/Benefits'
-import FeaturedGrid from '../components/home/FeaturedGrid'
+import GrillaDeDestacados from '../components/home/GrillaDeDestacados'
 import NewsGrid from '../components/home/NewsGrid'
 import Testimonials from '../components/home/Testimonials'
 import Discounts from '../components/home/Discounts'
-import { useFeatured } from '../hooks/useFeatured'
+import { productosDestacados } from '../hooks/ProductosDestacados'
 
 export default function HomePage() {
-  const { items: featured, loading } = useFeatured()
+  const { listaProductosDestacados, loadingCarga } = productosDestacados()
 
   return (
     <div className="py-3">
       <Hero />
       <Benefits />
-      <FeaturedGrid items={featured} loading={loading} />
+      <GrillaDeDestacados listaProductosDestacados={listaProductosDestacados} loadingCarga={loadingCarga} />
       <NewsGrid />
       <Testimonials />
       <Discounts />
