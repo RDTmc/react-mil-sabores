@@ -1,8 +1,12 @@
 import { Link } from 'react-router-dom';
+import { useFeatured } from '../hooks/useFeatured'
+import FeaturedGrid from '../components/home/FeaturedGrid'
 
 export default function HomePage() {
+  const { items, loading } = useFeatured()
   return (
     <div className="py-4">
+      <FeaturedGrid items={items} loading={loading} />
       <div className="p-5 mb-4 rounded-3" style={{ background:'#ffe9c0', border:'1px solid #f2d9a6' }}>
         <div className="container py-5">
           <h1 className="display-5 fw-bold" style={{ color:'#5D4037', fontFamily:'Pacifico, cursive' }}>Pastelería Mil Sabores</h1>
