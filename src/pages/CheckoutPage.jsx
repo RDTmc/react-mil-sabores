@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate()
   const { listaItems, obtenerTotales } = useCarrito()
   const totales = useMemo(() => obtenerTotales(listaItems), [listaItems, obtenerTotales])
+  const { showToast } = useToast()
 
   const [valores, setValores] = useState({
     nombreCompleto: '', email: '', telefono: '', direccion: '', comuna: '',
@@ -78,7 +79,13 @@ export default function CheckoutPage() {
     setTimeout(() => {
       setEnviando(false)
       // Mostrar un toast de éxito (opcional)
-      showToast({ title: 'Pago exitoso', message: 'Tu pago se procesó correctamente.', variant: 'success' })
+      showToast({ title: 'Pago exitoso', message: 'Tu pago se procesó correctamente.', variant: 'success', delay: 4000})
+      try {
+        
+      } catch (err) {
+        setEnviando(false)
+        showToast({ title: 'Error', message: 'Hubo un problema con el pago. Intenta nuevamente.', variant: 'danger', delay: 3000 })
+      }
       // Redirigir a la página de confirmación /pedido
       navigate('/pedido')
     }, 2000)  // Simulando un tiempo de espera del pago
