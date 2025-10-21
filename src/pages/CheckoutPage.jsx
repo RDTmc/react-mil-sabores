@@ -25,7 +25,7 @@ const reglas = {
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
-  const { listaItems, obtenerTotales } = useCarrito()
+  const { listaItems, obtenerTotales, vaciarCarrito } = useCarrito()
   const totales = useMemo(() => obtenerTotales(listaItems), [listaItems, obtenerTotales])
   const { showToast } = useToast()
 
@@ -36,8 +36,8 @@ export default function CheckoutPage() {
   const [errores, setErrores] = useState({})
   const [tocados, setTocados] = useState({})
   const [enviando, setEnviando] = useState(false)
+  const [compraExitosa, setCompraExitosa] = useState(false)
 
-  // Funciones de validación (igual que antes)
   const validarCampo = (nombre, valor) => {
     const fn = reglas[nombre]
     const msg = fn ? fn(valor) : ''
@@ -67,29 +67,36 @@ export default function CheckoutPage() {
   }
 
   const manejarSubmit = async e => {
-    e.preventDefault()
-    setTocados(Object.fromEntries(Object.keys(valores).map(k => [k, true])))
-    const errs = validarFormulario()
-    if (Object.values(errs).some(Boolean)) return
+  e.preventDefault()
+  setTocados(Object.fromEntries(Object.keys(valores).map(k => [k, true])))
+  const errs = validarFormulario()
+  if (Object.values(errs).some(Boolean)) return
 
-    // Simulando el proceso de pago
-    setEnviando(true)
+  // Simulando el proceso de pago
+  setEnviando(true)
 
-    // Aquí es donde normalmente deberías conectar con la API del backend para procesar el pago.
+  // Aquí es donde normalmente deberías conectar con la API del backend para procesar el pago.
+  setTimeout(() => {
+    setEnviando(false)
+    setCompraExitosa(true)
+
+    console.log("Mostrando el toast de compra exitosa");
+    showToast({
+      title: 'Pago exitoso',
+      message: 'Tu pago se procesó correctamente.',
+      variant: 'success',
+      delay: 4000
+    })
+
+    // Vaciar el carrito después del éxito 
+    vaciarCarrito()
+
     setTimeout(() => {
-      setEnviando(false)
-      // Mostrar un toast de éxito (opcional)
-      showToast({ title: 'Pago exitoso', message: 'Tu pago se procesó correctamente.', variant: 'success', delay: 4000})
-      try {
-        
-      } catch (err) {
-        setEnviando(false)
-        showToast({ title: 'Error', message: 'Hubo un problema con el pago. Intenta nuevamente.', variant: 'danger', delay: 3000 })
-      }
-      // Redirigir a la página de confirmación /pedido
       navigate('/pedido')
-    }, 2000)  // Simulando un tiempo de espera del pago
-  }
+    }, 4000);  
+  }, 2000)  
+}
+
 
   if (!listaItems || listaItems.length === 0) {
     return (
@@ -224,8 +231,8 @@ export default function CheckoutPage() {
 
         <div className="col-12 d-flex justify-content-end gap-2">
           <button className="btn btn-outline-secondary" type="button" onClick={() => navigate('/carrito')}>Volver al carrito</button>
-          <button className="btn btn-dark" type="submit" disabled={enviando}>
-            {enviando ? 'Procesando…' : `Pagar $${totales.total.toLocaleString('es-CL')}`}
+          <button className="btn btn-dark" type="submit" disabled={enviando || compraExitosa}>
+            {enviando ? 'Procesando…' : compraExitosa ? 'Compra realizada' : `Pagar $${totales.total.toLocaleString('es-CL')}`}
           </button>
         </div>
       </form>
