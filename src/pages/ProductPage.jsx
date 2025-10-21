@@ -1,30 +1,41 @@
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient'
+import GaleriaProducto from '../components/producto/GaleriaProducto'
+import FichaProducto from '../components/producto/FichaProducto'
 
 export default function ProductPage() {
-  const { id } = useParams();
+  const { id: idProductoDeRuta } = useParams();
+  const [producto, setProducto] = useState(null);
+  const [loadingCarga, setLoadingCarga] = useState(!!supabase)
+
+  useEffect(() => {
+    if (!supabase) return
+    let activo = true
+    ;(async () => {
+      setLoadingCarga(true)
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, price, image_path, description, sizes')
+        .eq('id', idProductoDeRuta)
+        .maybeSingle()
+      if (!activo) return
+      setProducto(data ?? null)
+      setLoadingCarga(false)
+    })()
+    return () => { activo = false }
+  }, [idProductoDeRuta])
+
   return (
-    <div className="container">
-      <div className="row g-4">
-        <div className="col-md-6">
-          <div className="bg-light rounded" style={{ height: 320 }} />
-        </div>
-        <div className="col-md-6">
-          <h1 className="h3">Producto {id}</h1>
-          <p>Descripción del producto desde BD.</p>
-          <div className="mb-3">
-            <label className="form-label">Tamaño</label>
-            <select className="form-select">
-              <option>8 porciones</option>
-              <option>10 porciones</option>
-              <option>12 porciones</option>
-            </select>
+    <div className="container py-3">
+      {loadingCarga ? <p className="text-muted">Cargando…</p> : (
+        producto ? (
+          <div className="row g-4">
+            <div className="col-md-6"><GaleriaProducto imagen={producto.image_path} /></div>
+            <div className="col-md-6"><FichaProducto producto={producto} /></div>
           </div>
-          <div className="d-flex gap-2">
-            <button className="btn btn-primary">Añadir al carrito</button>
-            <Link to="/carrito" className="btn btn-outline-secondary">Ir al carrito</Link>
-          </div>
-        </div>
-      </div>
+        ) : <div className="alert alert-warning">Producto no encontrado.</div>
+      )}
     </div>
-  );
+  )
 }

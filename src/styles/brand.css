@@ -1,0 +1,2 @@
+:root{ --ms-bg:#FFF5E1; --ms-text:#5D4037 }
+html,body{ background:var(--ms-bg); color:var(--ms-text) }
