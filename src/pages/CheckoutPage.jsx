@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCarrito } from '../context/CartContext'
 import { useToast } from '../context/ToastContext.jsx' 
@@ -28,16 +28,15 @@ export default function CheckoutPage() {
   const { listaItems, obtenerTotales } = useCarrito()
   const totales = useMemo(() => obtenerTotales(listaItems), [listaItems, obtenerTotales])
 
-  const { showToast } = useToast()
-
   const [valores, setValores] = useState({
-    nombreCompleto:'', email:'', telefono:'', direccion:'', comuna:'',
-    fechaEntrega:'', metodoPago:'', notas:''
+    nombreCompleto: '', email: '', telefono: '', direccion: '', comuna: '',
+    fechaEntrega: '', metodoPago: '', notas: ''
   })
   const [errores, setErrores] = useState({})
   const [tocados, setTocados] = useState({})
   const [enviando, setEnviando] = useState(false)
 
+  // Funciones de validación (igual que antes)
   const validarCampo = (nombre, valor) => {
     const fn = reglas[nombre]
     const msg = fn ? fn(valor) : ''
@@ -68,20 +67,21 @@ export default function CheckoutPage() {
 
   const manejarSubmit = async e => {
     e.preventDefault()
-    setTocados(Object.fromEntries(Object.keys(valores).map(k => [k,true])))
+    setTocados(Object.fromEntries(Object.keys(valores).map(k => [k, true])))
     const errs = validarFormulario()
     if (Object.values(errs).some(Boolean)) return
 
-    try {
-      setEnviando(true)
-      // TODO: crear pedido en Supabase si aplica
-      // showToast({ title:'Pedido', message:'Tu pedido ha sido registrado', variant:'success' })
-      navigate('/pedido') // o a /micuenta / gracias, etc.
-    } catch (err) {
-      // showToast({ title:'Error', message:String(err), variant:'danger' })
-    } finally {
+    // Simulando el proceso de pago
+    setEnviando(true)
+
+    // Aquí es donde normalmente deberías conectar con la API del backend para procesar el pago.
+    setTimeout(() => {
       setEnviando(false)
-    }
+      // Mostrar un toast de éxito (opcional)
+      showToast({ title: 'Pago exitoso', message: 'Tu pago se procesó correctamente.', variant: 'success' })
+      // Redirigir a la página de confirmación /pedido
+      navigate('/pedido')
+    }, 2000)  // Simulando un tiempo de espera del pago
   }
 
   if (!listaItems || listaItems.length === 0) {
@@ -191,7 +191,8 @@ export default function CheckoutPage() {
         <div className="col-md-6">
           <label className="form-label">Método de pago</label>
           <select
-            name="metodoPago" className={`form-select ${errores.metodoPago && tocados.metodoPago ? 'is-invalid' : ''}`}
+            name="metodoPago"
+            className={`form-select ${errores.metodoPago && tocados.metodoPago ? 'is-invalid' : ''}`}
             value={valores.metodoPago} onChange={manejarCambio} onBlur={manejarBlur}
             aria-invalid={!!(errores.metodoPago && tocados.metodoPago)} aria-describedby="err-pago"
           >
@@ -215,10 +216,10 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-12 d-flex justify-content-end gap-2">
-         <button className="btn btn-outline-secondary" type="button" onClick={() => navigate('/carrito')}>Volver al carrito</button>
-         <button className="btn btn-dark" type="submit" disabled={enviando}>
-          {enviando ? 'Procesando…' : `Pagar $${totales.total.toLocaleString('es-CL')}`}
-         </button>
+          <button className="btn btn-outline-secondary" type="button" onClick={() => navigate('/carrito')}>Volver al carrito</button>
+          <button className="btn btn-dark" type="submit" disabled={enviando}>
+            {enviando ? 'Procesando…' : `Pagar $${totales.total.toLocaleString('es-CL')}`}
+          </button>
         </div>
       </form>
     </div>
