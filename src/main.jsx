@@ -17,6 +17,9 @@ import AboutPage from './pages/AboutPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
+import CompraPage from './pages/CompraPage.jsx'
+import './styles/brand.css';
+import './styles/HomeSections.css';
 
 const router = createBrowserRouter([
   { element: <App />, children: [
@@ -30,6 +33,7 @@ const router = createBrowserRouter([
     { path: '/login', element: <LoginPage /> },
     { path: '/registro', element: <RegisterPage /> },
     { path: '/micuenta', element: <AccountPage /> },
+    { path: '/compra', element: <CompraPage /> },
   ] }
 ])
 

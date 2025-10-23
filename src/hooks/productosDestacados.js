@@ -7,6 +7,10 @@ const RESPALDO_DESTACADOS = [
   { id: 'PI001', name: 'Mousse de Chocolate',         price: 5000,  image_path: '/img/pi_mousse.png'    },
 ]
 
+/**
+ * Nota: dejamos el nombre de la función como `productosDestacados`
+ * para respetar tu API pública actual.
+ */
 export function productosDestacados() {
   const [listaProductosDestacados, setListaProductosDestacados] = useState(RESPALDO_DESTACADOS)
   const [loadingCarga, setLoadingCarga] = useState(true)
@@ -15,6 +19,11 @@ export function productosDestacados() {
   useEffect(() => {
     let activo = true
     ;(async () => {
+      if (!supabase) {
+        setLoadingCarga(false)
+        setErrorCarga('Supabase no está configurado. Revisa tu .env')
+        return
+      }
       try {
         setLoadingCarga(true)
         const { data, error } = await supabase
@@ -24,14 +33,14 @@ export function productosDestacados() {
         if (error) throw error
 
         const mapeado = (data ?? [])
-          .map(r => r.products)
+          .map(reg => reg.products)
           .filter(Boolean)
 
         if (activo && mapeado.length) setListaProductosDestacados(mapeado)
       } catch (err) {
-        setErrorCarga(err)
+        if (activo) setErrorCarga(err?.message ?? String(err))
       } finally {
-        setLoadingCarga(false)
+        if (activo) setLoadingCarga(false)
       }
     })()
     return () => { activo = false }

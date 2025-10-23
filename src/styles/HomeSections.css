@@ -1,0 +1,200 @@
+/* =========================================
+   Home Sections 
+========================================= */
+
+/* -------- Utilidades locales (alias) -------- */
+.ms-shadow-sm { box-shadow: var(--ms-shadow); }
+.ms-card {
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius);
+  transition: transform .25s ease, box-shadow .25s ease;
+  background: var(--ms-surface);
+}
+.ms-card:hover { transform: translateY(-4px); box-shadow: 0 12px 26px rgba(0,0,0,.08); }
+.ms-brand { color: var(--ms-primary); }
+
+/* =========================================
+   HERO
+========================================= */
+/* HERO */
+
+.seccion-principal {
+    text-align: center;
+    position: relative;
+    margin-top: -60px;
+}
+
+.contenido-principal {
+    max-width: auto;
+    margin: 0 auto;
+    position: relative;
+}
+
+.hero-imagen {
+    width: 100vw;
+    max-width: auto;
+    min-width: 320px;
+    margin: auto;
+    margin-top: 0 !important;
+    position: relative;
+}
+
+.hero-imagen img.main-img {
+    width: 100%;
+    height: auto;
+    display: block; /* Elimina espacios en blanco debajo de la imagen */
+}
+
+.contenido-texto {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: absolute;
+    left: 28%; /* Centramos horizontalmente */
+    top: 45%;
+    transform: translate(-50%, -50%); /* Centramos tanto horizontal como verticalmente */
+    color: #5D4037;
+    z-index: 2;
+    width: 90%; /* Añadimos un ancho para mejor control en dispositivos móviles */
+    padding: 0 20px; /* Añadimos padding lateral para dispositivos pequeños */
+}
+
+.titulo-destacado {
+    margin-top: 1rem;
+    font-size: 3rem !important;
+    font-family: Pacifico, cursive;
+    margin-bottom: 1rem;
+}
+
+.contenido-texto p {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.contenido-texto .fila-acciones {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+
+
+
+/* =========================================
+   BENEFITS
+========================================= */
+/* BANNER */
+.seccion-beneficios {
+    padding: 80px 0;
+    text-align: center;
+    background: #FFF5E1; 
+}
+
+.banner-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    margin-top: 5rem !important;
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.banner-card {
+    background:rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    backdrop-filter: blur(10px);
+}
+
+.banner-card:hover {transform: translateY(-10px);}
+
+.banner-icon {font-size: 3rem;
+    color: #8B4513;
+    margin-bottom: 1rem;
+}
+
+/* =========================================
+   TESTIMONIALS
+========================================= */
+.ms-testimonial .card-body { position: relative; }
+.ms-quote {
+  font-style: italic;
+  color: var(--ms-text);
+}
+.ms-quote:before {
+  content: "“";
+  position: absolute;
+  top: .35rem; left: .6rem;
+  font-size: 2.25rem; line-height: 1;
+  color: var(--ms-primary);
+  opacity: .15;
+}
+.ms-client-meta small { color: var(--ms-text-dim); }
+
+/* =========================================
+   DISCOUNTS
+========================================= */
+.ms-promo {
+  padding: 60px 0;
+  text-align: center;
+  background: linear-gradient(0deg, #c57d56 0%, #d28b63 100%);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.25);
+}
+
+.ms-promo h2 {
+  font-family: Pacifico, cursive;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.ms-promo-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  justify-items: center;
+  align-items: stretch;
+}
+
+.ms-promo .card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+  border-radius: var(--ms-radius);
+  color: #fff;
+  text-align: center;
+  transition: transform 0.3s ease;
+  border: none;
+}
+
+.ms-promo .card:hover {
+  transform: translateY(-10px);
+}
+
+.ms-promo .card .card-body {
+  padding: 1.5rem;
+}
+
+.ms-pct {
+  font-weight: 800;
+  font-size: clamp(1.8rem, 1.2rem + 2vw, 2.4rem);
+  line-height: 1;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* =========================================
+   Responsive tuning
+========================================= */
+@media (max-width: 991px){
+  .ms-hero-title { font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.8rem); }
+}

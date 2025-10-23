@@ -1,0 +1,90 @@
+
+.ms-navbar {
+  background: rgba(247, 230, 195, 0.8);
+  border-bottom: 1px solid var(--ms-border);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  height: 100px; 
+  line-height: 100px;
+}
+
+.ms-navbar .logo {
+  height: 96px;      
+  width: auto;       
+  max-width: none;   
+  display: block;    
+  object-fit: contain; 
+}
+
+.ms-navbar .navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+
+
+/* enlaces */
+.ms-navbar .nav-link{
+  position: relative;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: color .2s ease, background-color .2s ease, transform .2s ease;
+}
+
+.ms-navbar .nav-link.active{
+  color: #fff !important;
+  background-color: var(--ms-primary);
+}
+
+
+.ms-navbar .nav-link:hover::after,
+.ms-navbar .nav-link.active::after {
+  width: 100%;
+  height: 2px;
+}
+
+.ms-navbar .nav-link:hover{
+  color: #fff;
+  background-color: var(--ms-primary);
+  transform: translateY(-2px);
+}
+
+/* Badge del carrito sobre el icono */
+.ms-cart-btn{ position: relative; display:inline-flex; align-items:center; }
+.ms-cart-badge{
+  position: absolute;
+  top: 2px; right: 10px;
+  min-width: 16px; height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d33;
+  color: #fff;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  transform: translate(50%,-50%);
+  display:  inline-block; /* por defecto oculto */
+}
+.ms-cart-badge.activo{ display:inline-block; }
+
+
+/* toggle (menú móvil) */
+.navbar-toggler {
+  border: none;
+}
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 2px var(--ms-accent);
+}
+
+/* responsive */
+@media (max-width: 991px) {
+  .ms-navbar .nav-link {
+    padding: 0.5rem 0;
+  }
+  .ms-navbar .navbar-nav {
+    text-align: center;
+  }
+}

@@ -19,7 +19,7 @@ export default function GrillaDeProductos({ listaProductos = [] }) {
               <p className="card-text text-muted">{producto.description}</p>
               <div className="mt-auto d-flex justify-content-between align-items-center">
                 <span className="fw-semibold">${producto.price?.toLocaleString('es-CL')}</span>
-                <Link className="btn btn-outline-primary btn-sm" to={`/producto/${producto.id}`}>Ver</Link>
+                <Link className="btn btn-dark btn-sm" to={`/producto/${producto.id}`}>Ver</Link>
               </div>
             </div>
           </div>

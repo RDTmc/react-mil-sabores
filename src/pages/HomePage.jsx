@@ -5,9 +5,15 @@ import NewsGrid from '../components/home/NewsGrid'
 import Testimonials from '../components/home/Testimonials'
 import Discounts from '../components/home/Discounts'
 import { productosDestacados } from '../hooks/ProductosDestacados'
+import '../styles/brand.css';
+import '../styles/HomeSections.css';
+
+
+
+
 
 export default function HomePage() {
-  const { listaProductosDestacados, loadingCarga } = productosDestacados()
+  const { listaProductosDestacados, loadingCarga, errorCarga } = productosDestacados()
 
   return (
     <div className="py-3">

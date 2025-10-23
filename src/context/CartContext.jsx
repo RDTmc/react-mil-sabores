@@ -42,19 +42,14 @@ export function ProveedorCarrito({ children }) {
   const vaciar = () => setListaItems([]);
 
   const obtenerTotales = (items = listaItems) => {
-    const sub = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const sub = items.reduce((s, i) => s + Number(i.price) * Number(i.qty), 0);
     const iva = Math.round(sub * 0.19);
-    return { sub, iva, total: sub + iva };
+    const cantidad = items.reduce((s, i) => s + Number(i.qty || 0), 0);
+    return { sub, iva, total: sub + iva, cantidad };
   };
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('ms_carrito', JSON.stringify(listaItems))
-    } catch {}
-  }, [listaItems])
-
   const valor = useMemo(
-    () => ({ listaItems, agregarItem, removerItem, vaciar, obtenerTotales }),
+    () => ({ listaItems, agregarItem, removerItem, vaciar, vaciarCarrito: vaciar, obtenerTotales }),
     [listaItems]
   );
 

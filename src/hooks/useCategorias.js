@@ -9,13 +9,17 @@ const RESPALDO_CATEGORIAS = [
 
 export function useCategorias() {
   const [listaCategorias, setListaCategorias] = useState(RESPALDO_CATEGORIAS)
-  const [loadingCarga, setLoadingCarga] = useState(false)
+  const [loadingCarga, setLoadingCarga] = useState(true)
   const [errorCarga, setErrorCarga] = useState(null)
 
   useEffect(() => {
     let activo = true
     ;(async () => {
-      if (!supabase) return
+      if (!supabase) {
+        setLoadingCarga(false)
+        setErrorCarga('Supabase no está configurado. Revisa tu .env')
+        return
+      }
       try {
         setLoadingCarga(true)
         const { data, error } = await supabase
@@ -25,9 +29,9 @@ export function useCategorias() {
         if (error) throw error
         if (activo && data?.length) setListaCategorias(data)
       } catch (err) {
-        setErrorCarga(err)
+        if (activo) setErrorCarga(err?.message ?? String(err))
       } finally {
-        setLoadingCarga(false)
+        if (activo) setLoadingCarga(false)
       }
     })()
     return () => { activo = false }

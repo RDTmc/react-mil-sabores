@@ -1,7 +1,9 @@
+// src/pages/CheckoutPage.jsx
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCarrito } from '../context/CartContext'
-import { useToast } from '../context/ToastContext.jsx' 
+import { useToast } from '../context/ToastContext.jsx'
+
 
 const reglas = {
   nombreCompleto: v => !v ? 'El nombre es obligatorio.' :
@@ -9,23 +11,23 @@ const reglas = {
   email: v => !v ? 'El correo es obligatorio.' :
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'Formato de correo no válido.' : '',
   telefono: v => !v ? 'El teléfono es obligatorio.' :
-    !/^\+?\d{9,15}$/.test(v.replace(/\s|-/g,'')) ? 'Ingresa un teléfono válido (9–15 dígitos).' : '',
+    !/^\+?\d{9,15}$/.test(v.replace(/\s|-/g, '')) ? 'Ingresa un teléfono válido (9–15 dígitos).' : '',
   direccion: v => !v ? 'La dirección es obligatoria.' :
     v.trim().length < 5 ? 'La dirección debe tener al menos 5 caracteres.' : '',
   comuna: v => !v ? 'Selecciona tu comuna.' : '',
   fechaEntrega: v => {
     if (!v) return 'Selecciona una fecha de entrega.'
-    const hoy = new Date(); hoy.setHours(0,0,0,0)
-    const f = new Date(v); f.setHours(0,0,0,0)
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const f = new Date(v); f.setHours(0, 0, 0, 0)
     return f < hoy ? 'La fecha debe ser hoy o posterior.' : ''
   },
   metodoPago: v => !v ? 'Selecciona un método de pago.' : '',
-  notas: _ => '' // sin validación
+  notas: _ => ''
 }
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
-  const { listaItems, obtenerTotales, vaciarCarrito } = useCarrito()
+  const { listaItems, obtenerTotales, vaciar } = useCarrito()
   const totales = useMemo(() => obtenerTotales(listaItems), [listaItems, obtenerTotales])
   const { showToast } = useToast()
 
@@ -36,7 +38,6 @@ export default function CheckoutPage() {
   const [errores, setErrores] = useState({})
   const [tocados, setTocados] = useState({})
   const [enviando, setEnviando] = useState(false)
-  const [compraExitosa, setCompraExitosa] = useState(false)
 
   const validarCampo = (nombre, valor) => {
     const fn = reglas[nombre]
@@ -67,36 +68,44 @@ export default function CheckoutPage() {
   }
 
   const manejarSubmit = async e => {
-  e.preventDefault()
-  setTocados(Object.fromEntries(Object.keys(valores).map(k => [k, true])))
-  const errs = validarFormulario()
-  if (Object.values(errs).some(Boolean)) return
+    e.preventDefault()
+    setTocados(Object.fromEntries(Object.keys(valores).map(k => [k, true])))
+    const errs = validarFormulario()
+    if (Object.values(errs).some(Boolean)) return
 
-  // Simulando el proceso de pago
-  setEnviando(true)
+        // Simula proceso de pago
+    setEnviando(true)
 
-  // Aquí es donde normalmente deberías conectar con la API del backend para procesar el pago.
-  setTimeout(() => {
-    setEnviando(false)
-    setCompraExitosa(true)
+    // Guardar snapshot del pedido ANTES de vaciar el carrito
+    try {
+      sessionStorage.setItem('ms_last_order', JSON.stringify({
+        items: listaItems,
+        total: totales.total,
+        nombre: valores.nombreCompleto,
+        correo: valores.email,
+        fecha: new Date().toISOString()
+      }))
+    } catch (err) {
+      console.error('Error guardando pedido:', err)
+    }
 
-    console.log("Mostrando el toast de compra exitosa");
-    showToast({
-      title: 'Pago exitoso',
-      message: 'Tu pago se procesó correctamente.',
-      variant: 'success',
-      delay: 4000
-    })
-
-    // Vaciar el carrito después del éxito 
-    vaciarCarrito()
-
+    // Simular delay de procesamiento
     setTimeout(() => {
-      navigate('/pedido')
-    }, 4000);  
-  }, 2000)  
-}
+      // Toast de éxito
+      showToast({
+        title: 'Pago exitoso',
+        message: 'Tu pago se procesó correctamente.',
+        variant: 'success',
+        delay: 4000
+      })
 
+      // Vaciar carrito
+      vaciar()
+      
+      // Navegar a la página de confirmación
+      navigate('/compra', { replace: true })
+    }, 800)
+  }
 
   if (!listaItems || listaItems.length === 0) {
     return (
@@ -119,9 +128,10 @@ export default function CheckoutPage() {
 
       <form noValidate onSubmit={manejarSubmit} className="row g-3">
         <div className="col-md-6">
-          <label className="form-label">Nombre y Apellido</label>
+          <label htmlFor="nombreCompleto" className="form-label">Nombre y Apellido</label>
           <input
-            type="text" name="nombreCompleto" className={`form-control ${errores.nombreCompleto && tocados.nombreCompleto ? 'is-invalid' : ''}`}
+            type="text" name="nombreCompleto" id="nombreCompleto"
+            className={`form-control ${errores.nombreCompleto && tocados.nombreCompleto ? 'is-invalid' : ''}`}
             value={valores.nombreCompleto} onChange={manejarCambio} onBlur={manejarBlur}
             aria-invalid={!!(errores.nombreCompleto && tocados.nombreCompleto)}
             aria-describedby="err-nombre"
@@ -133,11 +143,13 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-md-6">
-          <label className="form-label">Correo electrónico</label>
+          <label htmlFor="email" className="form-label">Correo electrónico</label>
           <input
-            type="email" name="email" className={`form-control ${errores.email && tocados.email ? 'is-invalid' : ''}`}
+            type="email" name="email" id="email"
+            className={`form-control ${errores.email && tocados.email ? 'is-invalid' : ''}`}
             value={valores.email} onChange={manejarCambio} onBlur={manejarBlur}
-            aria-invalid={!!(errores.email && tocados.email)} aria-describedby="err-email"
+            aria-invalid={!!(errores.email && tocados.email)}
+            aria-describedby="err-email"
             placeholder="tu@correo.com"
           />
           {errores.email && tocados.email && (
@@ -146,11 +158,13 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-md-6">
-          <label className="form-label">Teléfono</label>
+          <label htmlFor="telefono" className="form-label">Teléfono</label>
           <input
-            type="tel" name="telefono" className={`form-control ${errores.telefono && tocados.telefono ? 'is-invalid' : ''}`}
+            type="tel" name="telefono" id="telefono"
+            className={`form-control ${errores.telefono && tocados.telefono ? 'is-invalid' : ''}`}
             value={valores.telefono} onChange={manejarCambio} onBlur={manejarBlur}
-            aria-invalid={!!(errores.telefono && tocados.telefono)} aria-describedby="err-telefono"
+            aria-invalid={!!(errores.telefono && tocados.telefono)}
+            aria-describedby="err-telefono"
             placeholder="+56912345678"
           />
           {errores.telefono && tocados.telefono && (
@@ -159,18 +173,19 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-md-6">
-          <label className="form-label">Comuna</label>
+          <label htmlFor="comuna" className="form-label">Comuna</label>
           <select
-            name="comuna" className={`form-select ${errores.comuna && tocados.comuna ? 'is-invalid' : ''}`}
+            name="comuna" id="comuna"
+            className={`form-select ${errores.comuna && tocados.comuna ? 'is-invalid' : ''}`}
             value={valores.comuna} onChange={manejarCambio} onBlur={manejarBlur}
-            aria-invalid={!!(errores.comuna && tocados.comuna)} aria-describedby="err-comuna"
+            aria-invalid={!!(errores.comuna && tocados.comuna)}
+            aria-describedby="err-comuna"
           >
             <option value="">Selecciona…</option>
             <option>Santiago</option>
             <option>Maipú</option>
             <option>Puente Alto</option>
             <option>Providencia</option>
-            {/* TODO: carga dinámica según región */}
           </select>
           {errores.comuna && tocados.comuna && (
             <div id="err-comuna" className="invalid-feedback">{errores.comuna}</div>
@@ -178,11 +193,13 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-12">
-          <label className="form-label">Dirección de entrega</label>
+          <label htmlFor="direccion" className="form-label">Dirección de entrega</label>
           <input
-            type="text" name="direccion" className={`form-control ${errores.direccion && tocados.direccion ? 'is-invalid' : ''}`}
+            type="text" name="direccion" id="direccion"
+            className={`form-control ${errores.direccion && tocados.direccion ? 'is-invalid' : ''}`}
             value={valores.direccion} onChange={manejarCambio} onBlur={manejarBlur}
-            aria-invalid={!!(errores.direccion && tocados.direccion)} aria-describedby="err-direccion"
+            aria-invalid={!!(errores.direccion && tocados.direccion)}
+            aria-describedby="err-direccion"
             placeholder="Calle 123, depto/casa"
           />
           {errores.direccion && tocados.direccion && (
@@ -191,24 +208,27 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-md-6">
-          <label className="form-label">Fecha de entrega</label>
+          <label htmlFor="fechaEntrega" className="form-label">Fecha de entrega</label>
           <input
-            type="date" name="fechaEntrega" className={`form-control ${errores.fechaEntrega && tocados.fechaEntrega ? 'is-invalid' : ''}`}
+            type="date" name="fechaEntrega" id="fechaEntrega"
+            className={`form-control ${errores.fechaEntrega && tocados.fechaEntrega ? 'is-invalid' : ''}`}
             value={valores.fechaEntrega} onChange={manejarCambio} onBlur={manejarBlur}
-            aria-invalid={!!(errores.fechaEntrega && tocados.fechaEntrega)} aria-describedby="err-fecha"
+            aria-invalid={!!(errores.fechaEntrega && tocados.fechaEntrega)}
+            aria-describedby="err-fecha"
           />
-          {errores.fechaEntrega && tocados.fechaEntrega && (
+          {errores.fechaEntrega && tocados.fechaEntrega  && (
             <div id="err-fecha" className="invalid-feedback">{errores.fechaEntrega}</div>
           )}
         </div>
 
         <div className="col-md-6">
-          <label className="form-label">Método de pago</label>
+          <label htmlFor="metodoPago" className="form-label">Método de pago</label>
           <select
-            name="metodoPago"
+            name="metodoPago" id="metodoPago"
             className={`form-select ${errores.metodoPago && tocados.metodoPago ? 'is-invalid' : ''}`}
             value={valores.metodoPago} onChange={manejarCambio} onBlur={manejarBlur}
-            aria-invalid={!!(errores.metodoPago && tocados.metodoPago)} aria-describedby="err-pago"
+            aria-invalid={!!(errores.metodoPago && tocados.metodoPago)}
+            aria-describedby="err-pago"
           >
             <option value="">Selecciona…</option>
             <option value="webpay">WebPay (tarjeta)</option>
@@ -221,18 +241,27 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-12">
-          <label className="form-label">Notas (opcional)</label>
+          <label htmlFor="direccion" className="form-label">Notas (opcional)</label>
           <textarea
-            name="notas" rows="3" className="form-control"
+            name="notas" id="notas" rows="3" className="form-control"
             value={valores.notas} onChange={manejarCambio} onBlur={manejarBlur}
             placeholder="Instrucciones para la entrega, alergias, etc."
           />
         </div>
 
         <div className="col-12 d-flex justify-content-end gap-2">
-          <button className="btn btn-outline-secondary" type="button" onClick={() => navigate('/carrito')}>Volver al carrito</button>
-          <button className="btn btn-dark" type="submit" disabled={enviando || compraExitosa}>
-            {enviando ? 'Procesando…' : compraExitosa ? 'Compra realizada' : `Pagar $${totales.total.toLocaleString('es-CL')}`}
+          <button
+            className="btn btn-outline-secondary"
+            type="button"
+            onClick={() => navigate('/carrito')}
+            disabled={enviando}
+          >
+            Volver al carrito
+          </button>
+          <button className="btn btn-dark" type="submit" disabled={enviando}>
+            {enviando
+              ? 'Procesando pago…'
+                : `Pagar $${totales.total.toLocaleString('es-CL')}`}
           </button>
         </div>
       </form>

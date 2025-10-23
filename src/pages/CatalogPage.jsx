@@ -49,7 +49,7 @@ export default function CatalogPage() {
         if (!activo) return
         setListaProductos(prods ?? [])
 
-        if (import.meta.env.DEV) {
+        if (process.env.NODE_ENV !== 'production') {
           console.log(`[Catalogo] Cargados ${prods?.length ?? 0} productos.`)
         }
       } catch (err) {

@@ -1,10 +1,14 @@
 import { useState } from 'react'
-import { useCart } from '../../context/CartContext' 
+import { Link, useNavigate } from 'react-router-dom'
+import { useToast } from '../../context/ToastContext'
+import { useCarrito } from '../../context/CartContext.jsx' 
 
 export default function FichaProducto({ producto }) {
-  const { agregarItem } = useCart()
+  const { agregarItem } = useCarrito()
+  const { showToast } = useToast()
   const [tamanioSeleccionado, setTamanioSeleccionado] = useState(producto?.sizes?.[0] ?? null)
   const [cantidad, setCantidad] = useState(1)
+  const navigate = useNavigate()
 
   if (!producto) return null
 
@@ -14,6 +18,13 @@ export default function FichaProducto({ producto }) {
       cantidad,
       tamanioSeleccionado
     )
+    showToast({
+      title: 'Añadido al carrito',
+      message: `${producto.name} x${cantidad}${tamanioSeleccionado ? ` (${tamanioSeleccionado})` : ''}`,
+      variant: 'success',
+      delay: 2200,
+      autohide: true
+    })
   }
 
   return (
@@ -47,8 +58,8 @@ export default function FichaProducto({ producto }) {
           onChange={e => setCantidad(Math.max(1, Number(e.target.value) || 1))}
           aria-label="Cantidad"
         />
-        <button className="btn btn-primary" onClick={manejarAgregarAlCarrito}>Añadir al carrito</button>
-        <a className="btn btn-outline-secondary" href="/carrito">Ir al carrito</a>
+        <button className="btn btn-dark" onClick={manejarAgregarAlCarrito}>Añadir al carrito</button>
+        <a className="btn btn-outline-secondary" onClick={() => navigate('/carrito')}>Ir al carrito</a>
       </div>
     </div>
   )

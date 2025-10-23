@@ -1,23 +1,28 @@
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom';
 
 export default function Hero() {
   return (
-    <section className="container py-4">
-      <div className="row align-items-center g-4">
-        <div className="col-md-6">
-          <div className="ratio ratio-4x3 rounded ms-shadow-sm" style={{ overflow:'hidden' }}>
-            <img src="/img/imagen-principal.jpg" alt="Imagen principal" className="w-100 h-100 object-fit-cover" />
-          </div>
+    <section className="seccion-principal">
+      <div className="contenido-principal">
+        <div className="hero-imagen">
+          <img
+            src="/img/imagen-principal.jpg"
+            alt="Imagen principal"
+            className="main-img"
+          />
+          {/* overlay opcional accesible */}
+          <span className="hero-overlay" aria-hidden="true" />
         </div>
-        <div className="col-md-6">
-          <h1 className="display-6 ms-brand">Celebra la dulzura de la vida</h1>
-          <p className="lead">Catálogo de tortas, postres y opciones sin azúcar, sin gluten y veganas.</p>
-          <div className="d-flex gap-2">
+
+        <div className="contenido-texto">
+          <h1 className="titulo-destacado">Celebra la dulzura de la vida</h1>
+          <p>Catálogo de tortas, postres y opciones sin azúcar, sin gluten y veganas.</p>
+          <div className="fila-acciones">
             <Link className="btn btn-dark" to="/catalogo">Ver catálogo</Link>
-            <Link className="btn btn-outline-dark" to="/blog">Recetas & Noticias</Link>
+            <Link className="btn btn-outline-secondary" to="/blog">Recetas & Noticias</Link>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

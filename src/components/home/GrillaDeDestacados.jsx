@@ -11,8 +11,8 @@ export default function GrillaDeDestacados({ listaProductosDestacados = [], load
         <Link to="/catalogo" className="btn btn-outline-secondary btn-sm">Ver todo</Link>
       </div>
 
-      <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-        {loadingCarga ? Array.from({length:3}).map((_,i)=>(
+      <div className="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
+        {loadingCarga ? Array.from({length:4}).map((_,i)=>(
           <div className="col" key={i}>
             <div className="card h-100 placeholder-glow">
             <div className="ratio ratio-4x3 placeholder"></div>
@@ -33,7 +33,7 @@ export default function GrillaDeDestacados({ listaProductosDestacados = [], load
                 <h5 className="card-title">{prod.name}</h5>
                 <p className="text-muted mb-2">Desde ${prod.price?.toLocaleString('es-CL')}</p>
                 <div className="mt-auto">
-                  <Link to={`/producto/${prod.id}`} className="btn btn-primary">Comprar ahora</Link>
+                  <Link to={`/producto/${prod.id}`} className="btn btn-dark">Comprar ahora</Link>
                 </div>
               </div>
             </div>

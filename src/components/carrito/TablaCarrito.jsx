@@ -1,7 +1,12 @@
-import { useCart, totals as obtenerTotales } from '../../context/CartContext'
+import { useCarrito } from '../../context/CartContext.jsx' // 👈 incluye .jsx para evitar confusiones del resolver
 
 export default function TablaCarrito() {
-  const { items: listaItems, removerItem } = useCart()
+  // (opcional) guard para detectar rápido si el import está mal en dev
+  if (import.meta.env.DEV && typeof useCarrito !== 'function') {
+    throw new Error('useCarrito no es una función. Revisa el import desde context/CartContext.jsx');
+  }
+
+  const { listaItems, removerItem, obtenerTotales } = useCarrito()
   const totales = obtenerTotales(listaItems)
 
   if (!listaItems.length) {
