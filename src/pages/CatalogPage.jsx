@@ -1,83 +1,73 @@
 // src/pages/CatalogPage.jsx
 import { useEffect, useMemo, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
 import BarraFiltros from '../components/catalogo/BarraFiltros.jsx'
 import GrillaDeProductos from '../components/catalogo/GrillaDeProductos.jsx'
-import { useCategorias } from '../hooks/useCategorias'
+import { fetchProducts, fetchCategories } from '../lib/apiClient'
+
+// Mantiene los mismos nombres/props que ya usas en tu UI:
+// - BarraFiltros: terminoDeBusqueda, onCambiarTerminoDeBusqueda, idCategoriaSeleccionada, onCambiarIdCategoriaSeleccionada, categorias
+// - GrillaDeProductos: listaProductos
 
 export default function CatalogPage() {
-  // 1) CATEGORÍAS: vienen del hook
-  const {
-    listaCategorias,
-    loadingCarga: loadingCategorias,
-    errorCarga: errorCategorias
-  } = useCategorias()
+  // 1) CATEGORÍAS: ahora desde la API
+  const [listaCategorias, setListaCategorias] = useState([])
+  const [loadingCategorias, setLoadingCategorias] = useState(true)
+  const [errorCategorias, setErrorCategorias] = useState(null)
 
-  // 2) PRODUCTOS: estados locales
+  // 2) PRODUCTOS
   const [listaProductos, setListaProductos] = useState([])
   const [loadingCarga, setLoadingCarga] = useState(true)
   const [errorCarga, setErrorCarga] = useState(null)
 
-  // 3) FILTROS UI
+  // 3) FILTROS UI (mismos nombres)
   const [terminoDeBusqueda, setTerminoDeBusqueda] = useState('')
   const [idCategoriaSeleccionada, setIdCategoriaSeleccionada] = useState('') // string del <select>
 
-  // 4) CARGA DE PRODUCTOS (solo productos)
+  // 4) Cargar categorías (una vez)
   useEffect(() => {
-    let activo = true
-
-    async function cargarProductos() {
-      if (!supabase) {
-        if (activo) {
-          setLoadingCarga(false)
-          setErrorCarga('Supabase no está configurado. Revisa tu .env')
-        }
-        return
-      }
+    let vivo = true
+    ;(async () => {
       try {
-        if (activo) {
-          setLoadingCarga(true)
-          setErrorCarga(null)
-        }
-
-        const { data: prods, error } = await supabase
-          .from('products')
-          .select('id, name, price, image_path, description, category_id')
-          .order('name')
-
-        if (error) throw error
-        if (!activo) return
-        setListaProductos(prods ?? [])
-
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`[Catalogo] Cargados ${prods?.length ?? 0} productos.`)
-        }
+        setLoadingCategorias(true); setErrorCategorias(null)
+        const cats = await fetchCategories()
+        if (!vivo) return
+        setListaCategorias(cats ?? [])
       } catch (err) {
-        if (activo) setErrorCarga(err?.message || 'Error al cargar catálogo')
+        if (vivo) setErrorCategorias(err?.response?.data?.message || err?.message || 'Error al cargar categorías')
       } finally {
-        if (activo) setLoadingCarga(false)
+        if (vivo) setLoadingCategorias(false)
       }
-    }
-
-    cargarProductos()
-    return () => { activo = false }
+    })()
+    return () => { vivo = false }
   }, [])
 
-  // 5) APLICAR FILTROS EN MEMORIA
-  const listaProductosFiltrada = useMemo(() => {
-    const texto = terminoDeBusqueda.trim().toLowerCase()
-    const categoriaNumero = idCategoriaSeleccionada ? Number(idCategoriaSeleccionada) : null
+  // 5) Cargar productos cuando cambian filtros (servidor aplica filtros)
+  useEffect(() => {
+    let vivo = true
+    ;(async () => {
+      try {
+        setLoadingCarga(true); setErrorCarga(null)
+        const q = terminoDeBusqueda?.trim() || undefined
+        const categoryId = idCategoriaSeleccionada ? Number(idCategoriaSeleccionada) : undefined
+        const data = await fetchProducts({ page: 0, size: 48, q, categoryId })
+        if (!vivo) return
+        setListaProductos(Array.isArray(data?.items) ? data.items : [])
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log(`[Catalogo] Cargados ${data?.items?.length ?? 0} productos (q=${q||'-'} cat=${categoryId||'-'})`)
+        }
+      } catch (err) {
+        if (vivo) setErrorCarga(err?.response?.data?.message || err?.message || 'Error al cargar catálogo')
+      } finally {
+        if (vivo) setLoadingCarga(false)
+      }
+    })()
+    return () => { vivo = false }
+  }, [terminoDeBusqueda, idCategoriaSeleccionada])
 
-    return listaProductos.filter(p => {
-      const coincideCategoria = categoriaNumero ? p.category_id === categoriaNumero : true
-      const coincideTexto = texto
-        ? (p.name?.toLowerCase().includes(texto) || p.description?.toLowerCase().includes(texto))
-        : true
-      return coincideCategoria && coincideTexto
-    })
-  }, [listaProductos, terminoDeBusqueda, idCategoriaSeleccionada])
+  // 6) (Opcional) Filtrado en memoria — ahora ya no es necesario, pero mantenemos tu contrato:
+  const listaProductosFiltrada = useMemo(() => listaProductos, [listaProductos])
 
-  // 6) FLAGS combinados de carga/errores para mostrar UI
   const estaCargando = loadingCarga || loadingCategorias
   const errorGlobal = errorCarga || errorCategorias
 
@@ -117,7 +107,6 @@ export default function CatalogPage() {
           ))}
         </div>
       )}
-
 
       {errorGlobal && (
         <div className="alert alert-danger">
