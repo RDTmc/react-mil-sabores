@@ -1,50 +1,41 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+// src/hooks/productosDestacados.js
+import { useEffect, useState } from "react";
+import { fetchFeatured } from "../lib/apiClient";
 
-const RESPALDO_DESTACADOS = [
-  { id: 'TC001', name: 'Torta Cuadrada de Chocolate', price: 45000, image_path: '/img/tc_chocolate.png' },
-  { id: 'TT001', name: 'Torta Circular de Vainilla',  price: 40000, image_path: '/img/tt_vainilla.png'  },
-  { id: 'PI001', name: 'Mousse de Chocolate',         price: 5000,  image_path: '/img/pi_mousse.png'    },
-]
-
-/**
- * Nota: dejamos el nombre de la función como `productosDestacados`
- * para respetar tu API pública actual.
- */
-export function productosDestacados() {
-  const [listaProductosDestacados, setListaProductosDestacados] = useState(RESPALDO_DESTACADOS)
-  const [loadingCarga, setLoadingCarga] = useState(true)
-  const [errorCarga, setErrorCarga] = useState(null)
+export function useProductosDestacados() {
+  const [destacados, setDestacados] = useState([]);
+  const [loadingDestacados, setLoadingDestacados] = useState(true);
+  const [errorDestacados, setErrorDestacados] = useState(null);
 
   useEffect(() => {
-    let activo = true
-    ;(async () => {
-      if (!supabase) {
-        setLoadingCarga(false)
-        setErrorCarga('Supabase no está configurado. Revisa tu .env')
-        return
-      }
+    let vivo = true;
+    (async () => {
       try {
-        setLoadingCarga(true)
-        const { data, error } = await supabase
-          .from('featured_products')
-          .select('position, products:product_id (id, name, price, image_path)')
-          .order('position', { ascending: true })
-        if (error) throw error
+        setLoadingDestacados(true); setErrorDestacados(null);
+        const data = await fetchFeatured();
+        if (!vivo) return;
 
-        const mapeado = (data ?? [])
-          .map(reg => reg.products)
-          .filter(Boolean)
+        // Aseguramos compatibilidad con componentes que esperan snake_case
+        const adaptados = (data || []).map(p => ({
+          ...p,
+          image_path: p.image_path ?? p.imagePath ?? null,
+          category_id: p.category_id ?? p.categoryId ?? null,
+        }));
 
-        if (activo && mapeado.length) setListaProductosDestacados(mapeado)
+        setDestacados(adaptados);
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log(`[Home] Destacados cargados: ${adaptados.length}`);
+        }
       } catch (err) {
-        if (activo) setErrorCarga(err?.message ?? String(err))
+        if (!vivo) return;
+        setErrorDestacados(err?.response?.data?.message || err?.message || "Error al cargar destacados");
       } finally {
-        if (activo) setLoadingCarga(false)
+        if (vivo) setLoadingDestacados(false);
       }
-    })()
-    return () => { activo = false }
-  }, [])
+    })();
+    return () => { vivo = false; };
+  }, []);
 
-  return { listaProductosDestacados, loadingCarga, errorCarga }
+  return { destacados, loadingDestacados, errorDestacados };
 }
