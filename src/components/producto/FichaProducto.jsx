@@ -13,11 +13,15 @@ export default function FichaProducto({ producto }) {
   if (!producto) return null
 
   const manejarAgregarAlCarrito = () => {
+    // ✅ Incluimos image_path para que el carrito tenga miniaturas
+    const image_path = producto.image_path ?? producto.imagePath ?? '/img/placeholder.png'
+
     agregarItem(
-      { id: producto.id, name: producto.name, price: producto.price },
+      { id: producto.id, name: producto.name, price: producto.price, image_path },
       cantidad,
       tamanioSeleccionado
     )
+
     showToast({
       title: 'Añadido al carrito',
       message: `${producto.name} x${cantidad}${tamanioSeleccionado ? ` (${tamanioSeleccionado})` : ''}`,
