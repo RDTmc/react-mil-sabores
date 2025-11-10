@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from 'react'
 import BarraFiltros from '../components/catalogo/BarraFiltros.jsx'
 import GrillaDeProductos from '../components/catalogo/GrillaDeProductos.jsx'
 import { fetchProducts, fetchCategories } from '../lib/apiClient'
+import PaginadorMS from '../components/catalogo/PaginadorMS.jsx'
+
+const DEFAULT_SIZE = 12;
 
 // Mantiene los mismos nombres/props que ya usas en tu UI:
 // - BarraFiltros: terminoDeBusqueda, onCambiarTerminoDeBusqueda, idCategoriaSeleccionada, onCambiarIdCategoriaSeleccionada, categorias
@@ -22,6 +25,9 @@ export default function CatalogPage() {
   // 3) FILTROS UI (mismos nombres)
   const [terminoDeBusqueda, setTerminoDeBusqueda] = useState('')
   const [idCategoriaSeleccionada, setIdCategoriaSeleccionada] = useState('') // string del <select>
+  const [page, setPage] = useState(0)
+  const [pageInfo, setPageInfo] = useState({ page: 0, size: DEFAULT_SIZE, totalItems: 0, totalPages: 0, hasNext: false })
+  const size = DEFAULT_SIZE
 
   // 4) Cargar categorías (una vez)
   useEffect(() => {
@@ -49,12 +55,22 @@ export default function CatalogPage() {
         setLoadingCarga(true); setErrorCarga(null)
         const q = terminoDeBusqueda?.trim() || undefined
         const categoryId = idCategoriaSeleccionada ? Number(idCategoriaSeleccionada) : undefined
-        const data = await fetchProducts({ page: 0, size: 48, q, categoryId })
+        const data = await fetchProducts({ page, size, q, categoryId })
         if (!vivo) return
         setListaProductos(Array.isArray(data?.items) ? data.items : [])
+
+        setPageInfo({
+          page: data?.page ?? page,
+          size: data?.size ?? size,
+          totalItems: data?.totalItems ?? 0,
+          totalPages: data?.totalPages ?? 0,
+          hasNext: !!data?.hasNext,
+        })
         if (import.meta.env.DEV) {
           // eslint-disable-next-line no-console
-          console.log(`[Catalogo] Cargados ${data?.items?.length ?? 0} productos (q=${q||'-'} cat=${categoryId||'-'})`)
+          console.log(`[Catalogo] page=${data?.page} size=${data?.size} 
+            totalPages=${data?.totalPages} items=${data?.items?.length ?? 0} 
+            (q=${q||'-'} cat=${categoryId||'-'})`)
         }
       } catch (err) {
         if (vivo) setErrorCarga(err?.response?.data?.message || err?.message || 'Error al cargar catálogo')
@@ -63,10 +79,14 @@ export default function CatalogPage() {
       }
     })()
     return () => { vivo = false }
-  }, [terminoDeBusqueda, idCategoriaSeleccionada])
+  }, [terminoDeBusqueda, idCategoriaSeleccionada, page, size])
+  
 
   // 6) (Opcional) Filtrado en memoria — ahora ya no es necesario, pero mantenemos tu contrato:
   const listaProductosFiltrada = useMemo(() => listaProductos, [listaProductos])
+
+  // al cambiar filtros, resetea a página 0
+  const onBuscar = (texto) => { setPage(0); }
 
   const estaCargando = loadingCarga || loadingCategorias
   const errorGlobal = errorCarga || errorCategorias
@@ -116,7 +136,16 @@ export default function CatalogPage() {
       )}
 
       {!estaCargando && !errorGlobal && (
+        <>
         <GrillaDeProductos listaProductos={listaProductosFiltrada} />
+        <div className="mt-4">
+          <PaginadorMS
+            page={pageInfo.page}
+            totalPages={pageInfo.totalPages}
+            onPagina={(p) => setPage(p)}
+          />
+        </div>
+        </>
       )}
     </div>
   )
