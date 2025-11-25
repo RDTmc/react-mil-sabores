@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import './styles/brand.css'
+import './styles/HomeSections.css';
 import { ProveedorCarrito } from './context/CartContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import App from './App.jsx'
@@ -18,8 +19,8 @@ import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import CompraPage from './pages/CompraPage.jsx'
-import './styles/brand.css';
-import './styles/HomeSections.css';
+
+import { AuthProvider } from './context/AuthContext.jsx' 
 
 const router = createBrowserRouter([
   { element: <App />, children: [
@@ -38,11 +39,13 @@ const router = createBrowserRouter([
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ProveedorCarrito>
-      <ToastProvider>
-        <RouterProvider router={router} />
-      </ToastProvider>
-    </ProveedorCarrito>
-  </React.StrictMode>
+  <AuthProvider>
+    <React.StrictMode>
+      <ProveedorCarrito>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </ProveedorCarrito>
+    </React.StrictMode>
+  </AuthProvider>
 )

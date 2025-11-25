@@ -1,5 +1,5 @@
 import { useState } from 'react'
-// import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
 // import { useToast } from '../context/ToastContext.jsx'
 
 const reglas = {
@@ -17,13 +17,18 @@ const reglas = {
 }
 
 export default function RegisterPage() {
+  const { register } = useAuth()
   // const { showToast } = useToast()
+
   const [valores, setValores] = useState({
     nombre:'', email:'', password:'', confirmarPassword:'', aceptaTerminos:false
   })
   const [errores, setErrores] = useState({})
   const [tocados, setTocados] = useState({})
   const [enviando, setEnviando] = useState(false)
+
+  const [mensajeExito, setMensajeExito] = useState(null)
+  const [mensajeError, setMensajeError] = useState(null)
 
   const validarCampo = (name, value, all = valores) => {
     const fn = reglas[name]
@@ -37,6 +42,9 @@ export default function RegisterPage() {
     const value = type === 'checkbox' ? e.target.checked : e.target.value
     const next = { ...valores, [name]: value }
     setValores(next)
+    setMensajeExito(null)
+    setMensajeError(null)
+
     if (tocados[name]) validarCampo(name, value, next)
     if (name === 'password' && tocados.confirmarPassword) {
       validarCampo('confirmarPassword', next.confirmarPassword, next)
@@ -64,19 +72,37 @@ export default function RegisterPage() {
 
   const manejarSubmit = async e => {
     e.preventDefault()
+    setMensajeExito(null)
+    setMensajeError(null)
+
     setTocados(Object.fromEntries(Object.keys(valores).map(k => [k,true])))
     const errs = validarFormulario()
     if (Object.values(errs).some(Boolean)) return
 
     try {
       setEnviando(true)
-      // const { data, error } = await supabase.auth.signUp({ email: valores.email, password: valores.password, options: { data: { nombre: valores.nombre } } })
-      // if (error) throw error
-      // showToast({ title:'Registro', message:'Revisa tu correo para confirmar tu cuenta', variant:'success' })
-      // Navega o limpia el formulario según tu flujo
+
+      // ms-usuarios: RegisterRequest(email, password, fullName, phone)
+      await register({
+        email: valores.email.trim(),
+        password: valores.password,
+        fullName: valores.nombre.trim(),
+        phone: null, // opcional, por ahora no se pide en el formulario
+      })
+
+      setMensajeExito('Cuenta creada con éxito. Ahora puedes iniciar sesión.')
       setValores({ nombre:'', email:'', password:'', confirmarPassword:'', aceptaTerminos:false })
+      setErrores({})
+      setTocados({})
+
+      // Si quisieras usar toasts:
+      // showToast({ title: 'Registro', message: 'Cuenta creada con éxito. Ahora puedes iniciar sesión.', variant: 'success' })
     } catch (err) {
-      // showToast({ title:'Error', message:String(err), variant:'danger' })
+      const backendMsg = err?.response?.data?.message
+      const msgLegible = backendMsg || err?.message || 'No fue posible crear la cuenta.'
+      setMensajeError(msgLegible)
+
+      // showToast({ title:'Error', message: msgLegible, variant:'danger' })
     } finally {
       setEnviando(false)
     }
@@ -85,6 +111,18 @@ export default function RegisterPage() {
   return (
     <div className="container py-3">
       <h1 className="h3 mb-3">Crear cuenta</h1>
+
+      {mensajeExito && (
+        <div className="alert alert-success" role="alert">
+          {mensajeExito}
+        </div>
+      )}
+
+      {mensajeError && (
+        <div className="alert alert-danger" role="alert">
+          {mensajeError}
+        </div>
+      )}
 
       <form noValidate onSubmit={manejarSubmit} className="row g-3">
         <div className="col-12">

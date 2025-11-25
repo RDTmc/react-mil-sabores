@@ -12,32 +12,98 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
 
-  // si ya hay sesión, redirige al destino (next) o a /account
+  const [emailError, setEmailError] = useState(null)
+  const [passwordError, setPasswordError] = useState(null)
+
+  // 👁️ nuevo: controlar si mostramos o no la contraseña
+  const [showPassword, setShowPassword] = useState(false)
+
+  // si ya hay sesión, redirige al destino (next) o a /micuenta
   useEffect(() => {
     if (!loadingAuth && isAuthenticated) {
       const params = new URLSearchParams(location.search)
-      const next = params.get('next') || '/account'
+      const next = params.get('next') || '/micuenta'
       navigate(next, { replace: true })
     }
   }, [isAuthenticated, loadingAuth, location.search, navigate])
 
+  const validarEmail = (value) => {
+    if (!value) return 'El correo es obligatorio.'
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(value)) return 'Ingresa un correo válido.'
+    return null
+  }
+
+  const validarPassword = (value) => {
+    if (!value) return 'La contraseña es obligatoria.'
+    if (value.length < 6) return 'La contraseña debe tener al menos 6 caracteres.'
+    return null
+  }
+
   const onSubmit = async (e) => {
     e.preventDefault()
     setErrorMsg(null)
-    if (!email || !password) {
-      setErrorMsg('Ingresa tu correo y contraseña.')
+
+    const emailTrimmed = email.trim()
+
+    const emailErr = validarEmail(emailTrimmed)
+    const passwordErr = validarPassword(password)
+
+    setEmailError(emailErr)
+    setPasswordError(passwordErr)
+
+    if (emailErr || passwordErr) {
+      setErrorMsg('Revisa los campos marcados e inténtalo nuevamente.')
       return
     }
+
     try {
       setSubmitting(true)
-      await login(email.trim(), password)
-      // la redirección se hará por el useEffect al detectar sesión
+      await login(emailTrimmed, password)
+      // la redirección la hace el useEffect cuando detecta sesión
     } catch (err) {
-      setErrorMsg(err?.message || 'No fue posible iniciar sesión.')
+      const backendMsg = err?.response?.data?.message
+      setErrorMsg(
+        backendMsg ||
+        err?.message ||
+        'No fue posible iniciar sesión.'
+      )
     } finally {
       setSubmitting(false)
     }
   }
+
+  const onChangeEmail = (e) => {
+    const value = e.target.value
+    setEmail(value)
+    setErrorMsg(null)
+    if (emailError) {
+      setEmailError(validarEmail(value.trim()))
+    }
+  }
+
+  const onChangePassword = (e) => {
+    const value = e.target.value
+    setPassword(value)
+    setErrorMsg(null)
+    if (passwordError) {
+      setPasswordError(validarPassword(value))
+    }
+  }
+
+  const onBlurEmail = () => {
+    setEmailError(validarEmail(email.trim()))
+  }
+
+  const onBlurPassword = () => {
+    setPasswordError(validarPassword(password))
+  }
+
+  const toggleShowPassword = () => {
+    setShowPassword(prev => !prev)
+  }
+
+  const isBusy = submitting || loadingAuth
 
   return (
     <div className="container py-4" style={{ maxWidth: 480 }}>
@@ -51,30 +117,62 @@ export default function LoginPage() {
           <input
             id="login-email"
             type="email"
-            className="form-control"
+            className={`form-control ${emailError ? 'is-invalid' : ''}`}
             autoComplete="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={onChangeEmail}
+            onBlur={onBlurEmail}
             required
-            disabled={submitting}
+            disabled={isBusy}
+            aria-invalid={!!emailError}
           />
+          {emailError && (
+            <div className="invalid-feedback">
+              {emailError}
+            </div>
+          )}
         </div>
 
         <div className="mb-3">
           <label className="form-label" htmlFor="login-password">Contraseña</label>
-          <input
-            id="login-password"
-            type="password"
-            className="form-control"
-            autoComplete="current-password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            disabled={submitting}
-          />
+
+          {/* Input + botón mostrar/ocultar usando Bootstrap input-group */}
+          <div className="input-group">
+            <input
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
+              className={`form-control ${passwordError ? 'is-invalid' : ''}`}
+              autoComplete="current-password"
+              value={password}
+              onChange={onChangePassword}
+              onBlur={onBlurPassword}
+              required
+              disabled={isBusy}
+              aria-invalid={!!passwordError}
+            />
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={toggleShowPassword}
+              disabled={isBusy}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            >
+              {showPassword ? 'Ocultar' : 'Mostrar'}
+            </button>
+          </div>
+
+          {passwordError && (
+            <div className="invalid-feedback d-block">
+              {passwordError}
+            </div>
+          )}
         </div>
 
-        <button type="submit" className="btn btn-dark w-100" disabled={submitting}>
+        <button
+          type="submit"
+          className="btn btn-dark w-100"
+          disabled={isBusy}
+        >
           {submitting ? 'Ingresando…' : 'Ingresar'}
         </button>
       </form>

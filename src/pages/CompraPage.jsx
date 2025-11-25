@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 
 export default function CompraPage() {
+  const { user } = useAuth()
   const [pedido, setPedido] = useState(null)
 
   useEffect(() => {
@@ -13,16 +15,46 @@ export default function CompraPage() {
     }
   }, [])
 
-  const { items, total, nombre, correo, fecha } = useMemo(() => {
-    if (!pedido) return { items: [], total: 0, nombre: '', correo: '', fecha: null }
+  const {
+    items,
+    subtotalAmount,
+    discountAmount,
+    discountCode,
+    discountDescription,
+    totalAmount,
+    createdAt,
+    shippingAddress,
+    paymentMethod,
+  } = useMemo(() => {
+    if (!pedido) {
+      return {
+        items: [],
+        subtotalAmount: 0,
+        discountAmount: 0,
+        discountCode: null,
+        discountDescription: null,
+        totalAmount: 0,
+        createdAt: null,
+        shippingAddress: '',
+        paymentMethod: '',
+      }
+    }
+
     return {
       items: Array.isArray(pedido.items) ? pedido.items : [],
-      total: Number(pedido.total || 0),
-      nombre: pedido.nombre || '',
-      correo: pedido.correo || '',
-      fecha: pedido.fecha || null
+      subtotalAmount: Number(pedido.subtotalAmount ?? pedido.totalAmount ?? 0),
+      discountAmount: Number(pedido.discountAmount ?? 0),
+      discountCode: pedido.discountCode ?? null,
+      discountDescription: pedido.discountDescription ?? null,
+      totalAmount: Number(pedido.totalAmount ?? 0),
+      createdAt: pedido.createdAt ?? null,
+      shippingAddress: pedido.shippingAddress ?? '',
+      paymentMethod: pedido.paymentMethod ?? '',
     }
   }, [pedido])
+
+  const nombre = user?.fullName || ''
+  const correo = user?.email || ''
 
   if (!pedido) {
     return (
@@ -41,9 +73,23 @@ export default function CompraPage() {
 
   const handlePrint = () => window.print()
 
-  // Cálculo de IVA (19%)
-  const subtotal = Math.round(total / 1.19)
-  const iva = Math.round(total - subtotal)
+  // IVA aproximado (19 %) incluido en el total
+  const total = totalAmount || 0
+  const netoAprox = total > 0 ? Math.round(total / 1.19) : 0
+  const iva = total > 0 ? total - netoAprox : 0
+
+  const paymentMethodLabel = useMemo(() => {
+    switch (paymentMethod) {
+      case 'CARD':
+        return 'Tarjeta'
+      case 'TRANSFER':
+        return 'Transferencia'
+      case 'CASH':
+        return 'Efectivo'
+      default:
+        return paymentMethod || 'No especificado'
+    }
+  }, [paymentMethod])
 
   return (
     <div className="container py-4">
@@ -51,7 +97,7 @@ export default function CompraPage() {
       <div className="mb-4">
         <h1 className="h3 mb-2">¡Gracias por comprar con nosotros!</h1>
         <p className="text-muted mb-0">
-          Tu compra fue procesada correctamente. Enviaremos la confirmación a <strong>{correo}</strong>.
+          Tu compra fue procesada correctamente. Enviaremos la confirmación a <strong>{correo || 'tu correo registrado'}</strong>.
         </p>
       </div>
 
@@ -70,13 +116,29 @@ export default function CompraPage() {
 
           <div className="row mb-3">
             <div className="col-md-6">
-              <div><strong>Cliente:</strong> {nombre}</div>
-              <div><strong>Correo:</strong> {correo}</div>
+              <div><strong>Cliente:</strong> {nombre || 'Cliente Mil Sabores'}</div>
+              <div><strong>Correo:</strong> {correo || '—'}</div>
+              <div><strong>Método de pago:</strong> {paymentMethodLabel}</div>
             </div>
             <div className="col-md-6 text-md-end">
-              <div><strong>Fecha:</strong> {fecha ? new Date(fecha).toLocaleString('es-CL') : '--'}</div>
+              <div>
+                <strong>Fecha:</strong>{' '}
+                {createdAt ? new Date(createdAt).toLocaleString('es-CL') : '--'}
+              </div>
+              <div>
+                <strong>Dirección:</strong>{' '}
+                {shippingAddress || '—'}
+              </div>
             </div>
           </div>
+
+          {/* Si hubo promoción, la mostramos destacada */}
+          {discountAmount > 0 && (
+            <div className="alert alert-success py-2">
+              <strong>Promoción aplicada:</strong>{' '}
+              {discountDescription || discountCode || 'Descuento especial en tu compra.'}
+            </div>
+          )}
 
           {/* Tabla de productos */}
           <div className="table-responsive">
@@ -91,12 +153,12 @@ export default function CompraPage() {
               </thead>
               <tbody>
                 {items.map((it) => {
-                  const nombreProd = it.nombre ?? it.name ?? 'Producto'
-                  const precio = Number(it.precio ?? it.price ?? 0)
-                  const cantidad = Number(it.cantidad ?? 1)
+                  const nombreProd = it.productName ?? it.nombre ?? it.name ?? 'Producto'
+                  const precio = Number(it.unitPrice ?? it.precio ?? it.price ?? 0)
+                  const cantidad = Number(it.quantity ?? it.cantidad ?? 1)
                   const sub = precio * cantidad
                   return (
-                    <tr key={`${it.id}-${nombreProd}`}>
+                    <tr key={it.id ?? `${nombreProd}-${precio}-${cantidad}`}>
                       <td>{nombreProd}</td>
                       <td className="text-center">{cantidad}</td>
                       <td className="text-end">${precio.toLocaleString('es-CL')}</td>
@@ -111,20 +173,47 @@ export default function CompraPage() {
                 )}
               </tbody>
 
-              {/* --- Footer con IVA integrado --- */}
               <tfoot className="table-borderless">
                 <tr>
-                  <td colSpan="3" className="text-end"><strong>IVA (19 %):</strong></td>
-                  <td className="text-end">${iva.toLocaleString('es-CL')}</td>
+                  <td colSpan="3" className="text-end">
+                    <strong>Subtotal (antes de descuentos):</strong>
+                  </td>
+                  <td className="text-end">
+                    ${subtotalAmount.toLocaleString('es-CL')}
+                  </td>
                 </tr>
+
+                {discountAmount > 0 && (
+                  <tr>
+                    <td colSpan="3" className="text-end text-success">
+                      <strong>Descuento promoción:</strong>
+                    </td>
+                    <td className="text-end text-success">
+                      -${discountAmount.toLocaleString('es-CL')}
+                    </td>
+                  </tr>
+                )}
+
+                <tr>
+                  <td colSpan="3" className="text-end">
+                    <strong>IVA (19 % aprox.):</strong>
+                  </td>
+                  <td className="text-end">
+                    ${iva.toLocaleString('es-CL')}
+                  </td>
+                </tr>
+
                 <tr className="table-light">
-                  <td colSpan="3" className="text-end fs-5"><strong>Total:</strong></td>
-                  <td className="text-end fs-5"><strong>${total.toLocaleString('es-CL')}</strong></td>
+                  <td colSpan="3" className="text-end fs-5">
+                    <strong>Total a pagar:</strong>
+                  </td>
+                  <td className="text-end fs-5">
+                    <strong>${total.toLocaleString('es-CL')}</strong>
+                  </td>
                 </tr>
               </tfoot>
             </table>
           </div>
-
 
           {/* Botones inferiores */}
           <div className="d-flex flex-wrap gap-2 justify-content-end mt-3">

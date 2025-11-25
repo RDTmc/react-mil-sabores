@@ -1,9 +1,10 @@
 // src/pages/CheckoutPage.jsx
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCarrito } from '../context/CartContext'
 import { useToast } from '../context/ToastContext.jsx'
-
+import { useAuth } from '../context/AuthContext.jsx'
+import { createOrder } from '../lib/apiClient'
 
 const reglas = {
   nombreCompleto: v => !v ? 'El nombre es obligatorio.' :
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const { listaItems, obtenerTotales, vaciar } = useCarrito()
   const totales = useMemo(() => obtenerTotales(listaItems), [listaItems, obtenerTotales])
   const { showToast } = useToast()
+  const { isAuthenticated } = useAuth()
 
   const [valores, setValores] = useState({
     nombreCompleto: '', email: '', telefono: '', direccion: '', comuna: '',
@@ -38,6 +40,13 @@ export default function CheckoutPage() {
   const [errores, setErrores] = useState({})
   const [tocados, setTocados] = useState({})
   const [enviando, setEnviando] = useState(false)
+
+  // Si el usuario no está logeado, lo mandamos a login
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login?next=/checkout', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const validarCampo = (nombre, valor) => {
     const fn = reglas[nombre]
@@ -72,39 +81,77 @@ export default function CheckoutPage() {
     setTocados(Object.fromEntries(Object.keys(valores).map(k => [k, true])))
     const errs = validarFormulario()
     if (Object.values(errs).some(Boolean)) return
+    if (!listaItems || listaItems.length === 0) return
 
-        // Simula proceso de pago
-    setEnviando(true)
-
-    // Guardar snapshot del pedido ANTES de vaciar el carrito
     try {
-      sessionStorage.setItem('ms_last_order', JSON.stringify({
-        items: listaItems,
-        total: totales.total,
-        nombre: valores.nombreCompleto,
-        correo: valores.email,
-        fecha: new Date().toISOString()
-      }))
-    } catch (err) {
-      console.error('Error guardando pedido:', err)
-    }
+      setEnviando(true)
 
-    // Simular delay de procesamiento
-    setTimeout(() => {
+      // Construimos shippingAddress compacto para la orden
+      const shippingAddress = [
+        valores.direccion,
+        valores.comuna,
+        `Tel: ${valores.telefono}`,
+        `Fecha entrega: ${valores.fechaEntrega}`,
+        valores.notas ? `Notas: ${valores.notas}` : null
+      ].filter(Boolean).join(' | ')
+
+      // Mapeamos items del carrito al formato de OrderDtos.CreateOrderItemRequest
+      const orderItems = listaItems.map(item => ({
+        productId: String(item.id),
+        productName: item.name,
+        image: item.imagePath || null, // si no tienes imagePath en el item, puedes dejar null
+        unitPrice: Number(item.price),
+        quantity: Number(item.qty),
+        size: item.size ?? null,
+        flavor: null
+      }))
+
+      const order = await createOrder({
+        paymentMethod: valores.metodoPago,
+        shippingAddress,
+        items: orderItems
+      })
+
+      // Guardar snapshot del pedido ANTES de vaciar el carrito, usando la respuesta real
+      try {
+        sessionStorage.setItem('ms_last_order', JSON.stringify({
+          orderId: order.id,
+          userId: order.userId,
+          totalAmount: order.totalAmount,
+          paymentMethod: order.paymentMethod,
+          shippingAddress: order.shippingAddress,
+          createdAt: order.createdAt,
+          items: order.items
+        }))
+      } catch (err) {
+        console.error('Error guardando pedido en sessionStorage:', err)
+      }
+
+      // Vaciar carrito (ms-cart + estado local)
+      await vaciar()
+
       // Toast de éxito
       showToast({
-        title: 'Pago exitoso',
-        message: 'Tu pago se procesó correctamente.',
+        title: 'Pedido creado',
+        message: 'Tu orden fue creada correctamente.',
         variant: 'success',
         delay: 4000
       })
 
-      // Vaciar carrito
-      vaciar()
-      
       // Navegar a la página de confirmación
       navigate('/compra', { replace: true })
-    }, 800)
+    } catch (err) {
+      console.error('Error al crear orden:', err)
+      const backendMsg = err?.response?.data?.message
+      showToast({
+        title: 'Error',
+        message: backendMsg || err?.message || 'No fue posible crear tu pedido.',
+        variant: 'danger',
+        delay: 5000
+      })
+    } finally {
+      setEnviando(false)
+    }
   }
 
   if (!listaItems || listaItems.length === 0) {
@@ -241,7 +288,7 @@ export default function CheckoutPage() {
         </div>
 
         <div className="col-12">
-          <label htmlFor="direccion" className="form-label">Notas (opcional)</label>
+          <label htmlFor="notas" className="form-label">Notas (opcional)</label>
           <textarea
             name="notas" id="notas" rows="3" className="form-control"
             value={valores.notas} onChange={manejarCambio} onBlur={manejarBlur}
@@ -260,8 +307,8 @@ export default function CheckoutPage() {
           </button>
           <button className="btn btn-dark" type="submit" disabled={enviando}>
             {enviando
-              ? 'Procesando pago…'
-                : `Pagar $${totales.total.toLocaleString('es-CL')}`}
+              ? 'Procesando pedido…'
+              : `Pagar $${totales.total.toLocaleString('es-CL')}`}
           </button>
         </div>
       </form>
