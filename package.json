@@ -14,11 +14,12 @@
   "dependencies": {
     "@fontsource/lato": "^5.2.7",
     "@fontsource/pacifico": "^5.2.7",
+    "@fortawesome/fontawesome-free": "^7.1.0",
     "@supabase/supabase-js": "^2.58.0",
+    "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "react-bootstrap": "^2.10.10",
     "react-icons": "^5.5.0",
-    "axios": "^1.12.2",
     "react-router-dom": "^7.9.3"
   },
   "devDependencies": {

@@ -1,12 +1,28 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaUser } from "react-icons/fa";
-import { useCarrito } from "../context/CartContext"; 
+import { useCarrito } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import "../styles/NavbarMS.css";
 import "../styles/brand.css";
 
 export default function NavbarMS() {
   const { listaItems, obtenerTotales } = useCarrito();
-  const { cantidad } = obtenerTotales(listaItems || []); 
+  const { cantidad } = obtenerTotales(listaItems || []);
+
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/", { replace: true });
+    } catch (e) {
+      // opcional: podrías mostrar un toast
+      // console.error('[Navbar] error al cerrar sesión', e)
+    }
+  };
+
+  const firstName = user?.fullName?.split(" ")[0] || "Mi Cuenta";
 
   return (
     <nav className="ms-navbar navbar navbar-expand-lg">
@@ -35,13 +51,19 @@ export default function NavbarMS() {
         <div className="collapse navbar-collapse" id="navMS">
           <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-2">
             <li className="nav-item">
-              <NavLink className="nav-link" to="/catalogo">Catálogo</NavLink>
+              <NavLink className="nav-link" to="/catalogo">
+                Catálogo
+              </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to="/blog">Blog</NavLink>
+              <NavLink className="nav-link" to="/blog">
+                Blog
+              </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to="/nosotros">Nosotros</NavLink>
+              <NavLink className="nav-link" to="/nosotros">
+                Nosotros
+              </NavLink>
             </li>
 
             {/* Carrito con badge */}
@@ -49,7 +71,11 @@ export default function NavbarMS() {
               <NavLink
                 className="nav-link d-flex align-items-center gap-1 ms-cart-btn"
                 to="/carrito"
-                aria-label={cantidad > 0 ? `Carrito, ${cantidad} artículos` : "Carrito vacío"}
+                aria-label={
+                  cantidad > 0
+                    ? `Carrito, ${cantidad} artículos`
+                    : "Carrito vacío"
+                }
               >
                 <FaShoppingCart aria-hidden="true" />
                 <span></span>
@@ -61,12 +87,34 @@ export default function NavbarMS() {
               </NavLink>
             </li>
 
-            {/* Mi Cuenta */}
-            <li className="nav-item">
-              <NavLink className="nav-link d-flex align-items-center gap-1" to="/micuenta">
-                <FaUser aria-hidden="true" />
-                <span>Mi Cuenta</span>
-              </NavLink>
+            {/* Mi Cuenta / Ingresar */}
+            <li className="nav-item d-flex align-items-center">
+              {isAuthenticated ? (
+                <>
+                  <NavLink
+                    className="nav-link d-flex align-items-center gap-1"
+                    to="/micuenta"
+                  >
+                    <FaUser aria-hidden="true" />
+                    <span>{firstName}</span>
+                  </NavLink>
+                  <button
+                    type="button"
+                    className="btn btn-link nav-link ms-2 p-0"
+                    onClick={handleLogout}
+                  >
+                    Salir
+                  </button>
+                </>
+              ) : (
+                <NavLink
+                  className="nav-link d-flex align-items-center gap-1"
+                  to="/login"
+                >
+                  <FaUser aria-hidden="true" />
+                  <span>Ingresar</span>
+                </NavLink>
+              )}
             </li>
           </ul>
         </div>

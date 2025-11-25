@@ -2,11 +2,11 @@
 import { useProductosDestacados } from "../../hooks/productosDestacados";
 import { Link, useNavigate } from "react-router-dom";
 import { useContext } from "react";
-import { CartContext } from "../../context/CartContext";
+import { useCarrito } from "../../context/CartContext";
 
 export default function GrillaDeDestacados() {
   const { destacados, loadingDestacados, errorDestacados } = useProductosDestacados();
-  const { agregarItem } = useContext(CartContext);
+  const { agregarItem } = useCarrito();
   const navigate = useNavigate();
 
   const handleComprarAhora = (p) => {
@@ -77,16 +77,9 @@ export default function GrillaDeDestacados() {
                 <div className="fw-bold mb-3">${p.price?.toLocaleString("es-CL")}</div>
 
                 <div className="d-flex gap-2 mt-auto">
-                  <Link to={`/producto/${p.id}`} className="btn btn-outline-secondary w-50">
+                  <Link to={`/producto/${p.id}`} className="btn btn-dark btn-sm">
                     Ver
                   </Link>
-                  <button
-                    type="button"
-                    className="btn btn-primary w-50"
-                    onClick={() => handleComprarAhora(p)}
-                  >
-                    Comprar ahora
-                  </button>
                 </div>
               </div>
             </div>
