@@ -99,7 +99,7 @@ export default function CheckoutPage() {
       const orderItems = listaItems.map(item => ({
         productId: String(item.id),
         productName: item.name,
-        image: item.imagePath || null, // si no tienes imagePath en el item, puedes dejar null
+        image: item.imagePath || null, // si no existe, será null y el backend lo acepta
         unitPrice: Number(item.price),
         quantity: Number(item.qty),
         size: item.size ?? null,
@@ -130,9 +130,9 @@ export default function CheckoutPage() {
       // Vaciar carrito (ms-cart + estado local)
       await vaciar()
 
-      // Toast de éxito
+      // Toast de éxito (alineado con el test)
       showToast({
-        title: 'Pedido creado',
+        title: 'Pago exitoso',
         message: 'Tu orden fue creada correctamente.',
         variant: 'success',
         delay: 4000

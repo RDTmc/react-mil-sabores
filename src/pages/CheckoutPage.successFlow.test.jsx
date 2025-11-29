@@ -17,6 +17,34 @@ jest.mock('react-router-dom', () => ({
   useNavigate: jest.fn()
 }))
 
+// Mock de createOrder (ms-orders)
+jest.mock('../lib/apiClient', () => ({
+  createOrder: jest.fn().mockResolvedValue({
+    id: 'order-1',
+    userId: 'user-1',
+    subtotalAmount: 10000,
+    discountAmount: 0,
+    discountCode: null,
+    discountDescription: null,
+    totalAmount: 11900,
+    paymentMethod: 'webpay',
+    shippingAddress: 'Calle Falsa 123 | Santiago | Tel: +56911112222 | Fecha entrega: 2099-12-12',
+    createdAt: '2099-12-12T10:00:00',
+    items: [
+      {
+        id: 'item-1',
+        productId: '1',
+        productName: 'Torta de Chocolate',
+        image: null,
+        unitPrice: 10000,
+        quantity: 1,
+        size: null,
+        flavor: null
+      }
+    ]
+  })
+}))
+
 describe('CheckoutPage - success flow', () => {
   beforeAll(() => {
     jest.useFakeTimers()
