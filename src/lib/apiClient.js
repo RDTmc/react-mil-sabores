@@ -231,3 +231,23 @@ export async function fetchMyOrders() {
   // data: List<OrderResponse>
   return data;
 }
+
+// ========== ADMIN (ms-orders) ==========
+// Devuelve las últimas órdenes creadas en el sistema (global, no solo del usuario).
+// Requiere JWT con rol ADMIN (el backend valida el claim "role").
+
+export async function fetchAdminLatestOrders(limit = 5) {
+  if (!ORDERS_BASE) {
+    throw new Error("VITE_ORDERS_API_URL no está configurada en .env");
+  }
+
+  const params = {};
+  if (limit != null) {
+    params.limit = limit;
+  }
+
+  const { data } = await ordersApi.get("/admin/orders/latest", { params });
+
+  return data; // List<OrderResponse>
+}
+
