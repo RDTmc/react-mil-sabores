@@ -9,7 +9,8 @@ export default function NavbarMS() {
   const { listaItems, obtenerTotales } = useCarrito();
   const { cantidad } = obtenerTotales(listaItems || []);
 
-  const { isAuthenticated, user, logout } = useAuth();
+  // 👇 AHORA también traemos isAdmin
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -86,6 +87,18 @@ export default function NavbarMS() {
                 )}
               </NavLink>
             </li>
+
+            {/* Link Admin visible solo para usuarios con rol ADMIN */}
+            {isAuthenticated && isAdmin && (
+              <li className="nav-item">
+                <NavLink
+                  className="nav-link d-flex align-items-center gap-1 text-uppercase small"
+                  to="/admin"
+                >
+                  <span>Admin</span>
+                </NavLink>
+              </li>
+            )}
 
             {/* Mi Cuenta / Ingresar */}
             <li className="nav-item d-flex align-items-center">

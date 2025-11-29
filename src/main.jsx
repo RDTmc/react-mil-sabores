@@ -20,22 +20,29 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import AccountPage from './pages/AccountPage.jsx'
 import CompraPage from './pages/CompraPage.jsx'
 
-import { AuthProvider } from './context/AuthContext.jsx' 
+import { AuthProvider } from './context/AuthContext.jsx'
+import AdminDashboardPage from './pages/AdminDashboardPage.jsx'
 
 const router = createBrowserRouter([
-  { element: <App />, children: [
-    { path: '/', element: <HomePage /> },
-    { path: '/catalogo', element: <CatalogPage /> },
-    { path: '/producto/:id', element: <ProductPage /> },
-    { path: '/carrito', element: <CartPage /> },
-    { path: '/pedido', element: <CheckoutPage /> },
-    { path: '/blog', element: <BlogPage /> },
-    { path: '/nosotros', element: <AboutPage /> },
-    { path: '/login', element: <LoginPage /> },
-    { path: '/registro', element: <RegisterPage /> },
-    { path: '/micuenta', element: <AccountPage /> },
-    { path: '/compra', element: <CompraPage /> },
-  ] }
+  {
+    element: <App />,
+    children: [
+      { path: '/', element: <HomePage /> },
+      { path: '/catalogo', element: <CatalogPage /> },
+      { path: '/producto/:id', element: <ProductPage /> },
+      { path: '/carrito', element: <CartPage /> },
+      { path: '/pedido', element: <CheckoutPage /> },
+      { path: '/blog', element: <BlogPage /> },
+      { path: '/nosotros', element: <AboutPage /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/registro', element: <RegisterPage /> },
+      { path: '/micuenta', element: <AccountPage /> },
+      { path: '/compra', element: <CompraPage /> },
+
+      // 👇 NUEVA RUTA: Dashboard de administrador
+      { path: '/admin', element: <AdminDashboardPage /> },
+    ],
+  },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
