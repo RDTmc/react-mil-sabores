@@ -5,6 +5,30 @@ const AuthContext = createContext(null);
 
 const AUTH_STORAGE_KEY = "ms_auth_state";
 
+/**
+ * Decodifica el payload de un JWT (sin verificar firma).
+ * Devuelve un objeto con los claims o null si falla.
+ */
+function decodeJwtPayload(token) {
+  if (!token || typeof token !== "string") return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    let payload = parts[1];
+
+    // Base64URL → Base64
+    payload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    while (payload.length % 4 !== 0) {
+      payload += "=";
+    }
+
+    const json = atob(payload);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 function loadInitialState() {
   if (typeof window === "undefined") {
     return { token: null, user: null };
@@ -12,10 +36,34 @@ function loadInitialState() {
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return { token: null, user: null };
+
     const parsed = JSON.parse(raw);
+    const storedToken = parsed.token || null;
+    let storedUser = parsed.user || null;
+
+    // Si hay token, tratamos de reconstruir el usuario desde el JWT
+    if (storedToken) {
+      const payload = decodeJwtPayload(storedToken);
+
+      if (payload) {
+        const id = payload.sub || storedUser?.id || null;
+        const email = payload.email || storedUser?.email || null;
+        const fullName =
+          payload.fullName || payload.name || storedUser?.fullName || null;
+        const role = payload.role || storedUser?.role || null;
+
+        storedUser = {
+          id,
+          email,
+          fullName,
+          role,
+        };
+      }
+    }
+
     return {
-      token: parsed.token || null,
-      user: parsed.user || null,
+      token: storedToken,
+      user: storedUser,
     };
   } catch {
     return { token: null, user: null };
@@ -57,11 +105,16 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const data = await loginUser({ email, password });
     // data: { token, userId, email, fullName }
+
+    const payload = data.token ? decodeJwtPayload(data.token) : null;
+
     const mappedUser = {
-      id: data.userId,
-      email: data.email,
-      fullName: data.fullName,
+      id: payload?.sub || data.userId,
+      email: payload?.email || data.email,
+      fullName: payload?.fullName || payload?.name || data.fullName,
+      role: payload?.role || null, // "ADMIN" / "CUSTOMER" (ya viene del JWT)
     };
+
     const next = {
       token: data.token,
       user: mappedUser,
@@ -95,11 +148,15 @@ export function AuthProvider({ children }) {
 
   const getUserId = () => authState.user?.id || null;
 
+  const isAuthenticated = !!user && !!token;
+  const isAdmin = !!user && user.role === "ADMIN";
+
   const value = useMemo(
     () => ({
       user,
       token,
-      isAuthenticated: !!user && !!token,
+      isAuthenticated,
+      isAdmin,
       loadingAuth,
       login,
       register,
@@ -107,7 +164,7 @@ export function AuthProvider({ children }) {
       getToken,
       getUserId,
     }),
-    [user, token, loadingAuth]
+    [user, token, isAuthenticated, isAdmin, loadingAuth]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
