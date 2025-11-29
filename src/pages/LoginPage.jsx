@@ -3,7 +3,8 @@ import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
-  const { isAuthenticated, loadingAuth, login } = useAuth()
+  // ⬅️ ahora también traemos isAdmin desde el contexto
+  const { isAuthenticated, loadingAuth, login, isAdmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -15,17 +16,27 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState(null)
   const [passwordError, setPasswordError] = useState(null)
 
-  // 👁️ nuevo: controlar si mostramos o no la contraseña
+  // 👁️ controlar si mostramos o no la contraseña
   const [showPassword, setShowPassword] = useState(false)
 
-  // si ya hay sesión, redirige al destino (next) o a /micuenta
+  // si ya hay sesión, redirige al destino (next) o a /micuenta o /admin/panel
   useEffect(() => {
     if (!loadingAuth && isAuthenticated) {
       const params = new URLSearchParams(location.search)
-      const next = params.get('next') || '/micuenta'
-      navigate(next, { replace: true })
+      const next = params.get('next')
+
+      if (next) {
+        // si el login venía desde una ruta protegida, respetamos ese destino
+        navigate(next, { replace: true })
+      } else if (isAdmin) {
+        // si no hay next y es admin → panel admin
+        navigate('/admin/panel', { replace: true })
+      } else {
+        // usuario normal → mi cuenta
+        navigate('/micuenta', { replace: true })
+      }
     }
-  }, [isAuthenticated, loadingAuth, location.search, navigate])
+  }, [isAuthenticated, loadingAuth, isAdmin, location.search, navigate])
 
   const validarEmail = (value) => {
     if (!value) return 'El correo es obligatorio.'
@@ -59,6 +70,7 @@ export default function LoginPage() {
 
     try {
       setSubmitting(true)
+      // login ya se encarga de guardar token + user (incluyendo role)
       await login(emailTrimmed, password)
       // la redirección la hace el useEffect cuando detecta sesión
     } catch (err) {
