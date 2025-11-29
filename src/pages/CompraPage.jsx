@@ -25,6 +25,7 @@ export default function CompraPage() {
     createdAt,
     shippingAddress,
     paymentMethod,
+    orderId,
   } = useMemo(() => {
     if (!pedido) {
       return {
@@ -37,11 +38,13 @@ export default function CompraPage() {
         createdAt: null,
         shippingAddress: '',
         paymentMethod: '',
+        orderId: null,
       }
     }
 
     return {
       items: Array.isArray(pedido.items) ? pedido.items : [],
+      // Si el backend no devolvió subtotal, usamos totalAmount como fallback
       subtotalAmount: Number(pedido.subtotalAmount ?? pedido.totalAmount ?? 0),
       discountAmount: Number(pedido.discountAmount ?? 0),
       discountCode: pedido.discountCode ?? null,
@@ -50,6 +53,8 @@ export default function CompraPage() {
       createdAt: pedido.createdAt ?? null,
       shippingAddress: pedido.shippingAddress ?? '',
       paymentMethod: pedido.paymentMethod ?? '',
+      // orderId que guardamos en CheckoutPage, o id si algún día guardas el objeto completo
+      orderId: pedido.orderId ?? pedido.id ?? null,
     }
   }, [pedido])
 
@@ -79,12 +84,17 @@ export default function CompraPage() {
   const iva = total > 0 ? total - netoAprox : 0
 
   const paymentMethodLabel = useMemo(() => {
-    switch (paymentMethod) {
+    const value = (paymentMethod || '').toUpperCase()
+
+    switch (value) {
       case 'CARD':
-        return 'Tarjeta'
+      case 'WEBPAY':
+        return 'Tarjeta / WebPay'
       case 'TRANSFER':
+      case 'TRANSFERENCIA':
         return 'Transferencia'
       case 'CASH':
+      case 'EFECTIVO':
         return 'Efectivo'
       default:
         return paymentMethod || 'No especificado'
@@ -121,6 +131,10 @@ export default function CompraPage() {
               <div><strong>Método de pago:</strong> {paymentMethodLabel}</div>
             </div>
             <div className="col-md-6 text-md-end">
+              <div>
+                <strong>N° pedido:</strong>{' '}
+                {orderId || '—'}
+              </div>
               <div>
                 <strong>Fecha:</strong>{' '}
                 {createdAt ? new Date(createdAt).toLocaleString('es-CL') : '--'}
@@ -217,7 +231,10 @@ export default function CompraPage() {
 
           {/* Botones inferiores */}
           <div className="d-flex flex-wrap gap-2 justify-content-end mt-3">
-            <Link className="btn btn-outline-secondary" to="/micuenta">Ver mis pedidos</Link>
+            {/* Este botón luego lo conectamos a fetchMyOrders() */}
+            <Link className="btn btn-outline-secondary" to="/micuenta">
+              Ver mis pedidos
+            </Link>
             <Link className="btn btn-dark" to="/">Ir al inicio</Link>
           </div>
         </div>
