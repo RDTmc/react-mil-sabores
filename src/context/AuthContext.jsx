@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { loginUser, registerUser } from "../lib/apiClient";
 
@@ -6,23 +7,16 @@ const AuthContext = createContext(null);
 const AUTH_STORAGE_KEY = "ms_auth_state";
 
 /**
- * Decodifica el payload de un JWT (sin verificar firma).
- * Devuelve un objeto con los claims o null si falla.
+ * Decodifica un JWT (sin verificar firma) para leer el payload.
+ * Solo lo usamos para leer el claim "role" en el frontend.
  */
-function decodeJwtPayload(token) {
-  if (!token || typeof token !== "string") return null;
+function decodeJwt(token) {
+  if (!token) return null;
   try {
     const parts = token.split(".");
-    if (parts.length < 2) return null;
-    let payload = parts[1];
-
-    // Base64URL → Base64
-    payload = payload.replace(/-/g, "+").replace(/_/g, "/");
-    while (payload.length % 4 !== 0) {
-      payload += "=";
-    }
-
-    const json = atob(payload);
+    if (parts.length !== 3) return null;
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(base64);
     return JSON.parse(json);
   } catch {
     return null;
@@ -36,35 +30,21 @@ function loadInitialState() {
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return { token: null, user: null };
-
     const parsed = JSON.parse(raw);
-    const storedToken = parsed.token || null;
-    let storedUser = parsed.user || null;
 
-    // Si hay token, tratamos de reconstruir el usuario desde el JWT
-    if (storedToken) {
-      const payload = decodeJwtPayload(storedToken);
+    const token = parsed.token || null;
+    let user = parsed.user || null;
 
-      if (payload) {
-        const id = payload.sub || storedUser?.id || null;
-        const email = payload.email || storedUser?.email || null;
-        const fullName =
-          payload.fullName || payload.name || storedUser?.fullName || null;
-        const role = payload.role || storedUser?.role || null;
-
-        storedUser = {
-          id,
-          email,
-          fullName,
-          role,
-        };
+    // Si hay token pero el user guardado no tiene role, lo calculamos desde el JWT
+    if (token && user && !user.role) {
+      const payload = decodeJwt(token);
+      const role = payload?.role || null;
+      if (role) {
+        user = { ...user, role };
       }
     }
 
-    return {
-      token: storedToken,
-      user: storedUser,
-    };
+    return { token, user };
   } catch {
     return { token: null, user: null };
   }
@@ -101,18 +81,22 @@ export function AuthProvider({ children }) {
   /**
    * Login contra ms-usuarios.
    * Usa loginUser de apiClient.
+   * data esperado: { token, userId, email, fullName, (opcionalmente role) }
+   * El rol se obtiene del body o del JWT (claim "role").
    */
   const login = async (email, password) => {
     const data = await loginUser({ email, password });
-    // data: { token, userId, email, fullName }
 
-    const payload = data.token ? decodeJwtPayload(data.token) : null;
+    // Intentamos leer el role desde el body o desde el JWT
+    const payload = decodeJwt(data.token);
+    const roleFromToken = payload?.role || null;
+    const role = data.role || roleFromToken || null;
 
     const mappedUser = {
-      id: payload?.sub || data.userId,
-      email: payload?.email || data.email,
-      fullName: payload?.fullName || payload?.name || data.fullName,
-      role: payload?.role || null, // "ADMIN" / "CUSTOMER" (ya viene del JWT)
+      id: data.userId,
+      email: data.email,
+      fullName: data.fullName,
+      role, // puede ser "ADMIN", "CUSTOMER", etc.
     };
 
     const next = {
@@ -148,24 +132,26 @@ export function AuthProvider({ children }) {
 
   const getUserId = () => authState.user?.id || null;
 
-  const isAuthenticated = !!user && !!token;
-  const isAdmin = !!user && user.role === "ADMIN";
+  const value = useMemo(() => {
+    const role = authState.user?.role || null;
+    const isAdmin = !!role && role.toUpperCase() === "ADMIN";
+    const isCustomer = !!role && role.toUpperCase() === "CUSTOMER";
 
-  const value = useMemo(
-    () => ({
+    return {
       user,
       token,
-      isAuthenticated,
+      role,
       isAdmin,
+      isCustomer,
+      isAuthenticated: !!user && !!token,
       loadingAuth,
       login,
       register,
       logout,
       getToken,
       getUserId,
-    }),
-    [user, token, isAuthenticated, isAdmin, loadingAuth]
-  );
+    };
+  }, [user, token, loadingAuth]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

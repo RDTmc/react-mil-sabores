@@ -1,3 +1,4 @@
+// src/components/NavbarMS.jsx
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaUser } from "react-icons/fa";
 import { useCarrito } from "../context/CartContext";
@@ -9,8 +10,7 @@ export default function NavbarMS() {
   const { listaItems, obtenerTotales } = useCarrito();
   const { cantidad } = obtenerTotales(listaItems || []);
 
-  // 👇 AHORA también traemos isAdmin
-  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -67,6 +67,15 @@ export default function NavbarMS() {
               </NavLink>
             </li>
 
+            {/* 🔐 Link al panel ADMIN solo si el usuario es admin */}
+            {isAuthenticated && isAdmin && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/admin/panel">
+                  Admin
+                </NavLink>
+              </li>
+            )}
+
             {/* Carrito con badge */}
             <li className="nav-item">
               <NavLink
@@ -87,18 +96,6 @@ export default function NavbarMS() {
                 )}
               </NavLink>
             </li>
-
-            {/* Link Admin visible solo para usuarios con rol ADMIN */}
-            {isAuthenticated && isAdmin && (
-              <li className="nav-item">
-                <NavLink
-                  className="nav-link d-flex align-items-center gap-1 text-uppercase small"
-                  to="/admin"
-                >
-                  <span>Admin</span>
-                </NavLink>
-              </li>
-            )}
 
             {/* Mi Cuenta / Ingresar */}
             <li className="nav-item d-flex align-items-center">
