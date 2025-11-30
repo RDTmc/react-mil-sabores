@@ -38,8 +38,6 @@ const router = createBrowserRouter([
       { path: '/registro', element: <RegisterPage /> },
       { path: '/micuenta', element: <AccountPage /> },
       { path: '/compra', element: <CompraPage /> },
-
-      // 👇 NUEVA RUTA: Dashboard de administrador
       { path: '/admin', element: <AdminDashboardPage /> },
     ],
   },
