@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState(null)
   const [passwordError, setPasswordError] = useState(null)
 
-  // 👁️ controlar si mostramos o no la contraseña
+  // controlar si mostramos o no la contraseña
   const [showPassword, setShowPassword] = useState(false)
 
   // si ya hay sesión, redirige al destino (next) o a /micuenta o /admin/panel

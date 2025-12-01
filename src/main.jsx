@@ -38,7 +38,7 @@ const router = createBrowserRouter([
       { path: '/registro', element: <RegisterPage /> },
       { path: '/micuenta', element: <AccountPage /> },
       { path: '/compra', element: <CompraPage /> },
-      { path: '/admin', element: <AdminDashboardPage /> },
+      { path: '/admin/panel', element: <AdminDashboardPage /> },
     ],
   },
 ])

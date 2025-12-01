@@ -1,27 +1,9 @@
-// src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { loginUser, registerUser } from "../lib/apiClient";
 
 const AuthContext = createContext(null);
 
 const AUTH_STORAGE_KEY = "ms_auth_state";
-
-/**
- * Decodifica un JWT (sin verificar firma) para leer el payload.
- * Solo lo usamos para leer el claim "role" en el frontend.
- */
-function decodeJwt(token) {
-  if (!token) return null;
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const json = atob(base64);
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
 
 function loadInitialState() {
   if (typeof window === "undefined") {
@@ -31,20 +13,10 @@ function loadInitialState() {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return { token: null, user: null };
     const parsed = JSON.parse(raw);
-
-    const token = parsed.token || null;
-    let user = parsed.user || null;
-
-    // Si hay token pero el user guardado no tiene role, lo calculamos desde el JWT
-    if (token && user && !user.role) {
-      const payload = decodeJwt(token);
-      const role = payload?.role || null;
-      if (role) {
-        user = { ...user, role };
-      }
-    }
-
-    return { token, user };
+    return {
+      token: parsed.token || null,
+      user: parsed.user || null,
+    };
   } catch {
     return { token: null, user: null };
   }
@@ -81,24 +53,17 @@ export function AuthProvider({ children }) {
   /**
    * Login contra ms-usuarios.
    * Usa loginUser de apiClient.
-   * data esperado: { token, userId, email, fullName, (opcionalmente role) }
-   * El rol se obtiene del body o del JWT (claim "role").
    */
   const login = async (email, password) => {
     const data = await loginUser({ email, password });
-
-    // Intentamos leer el role desde el body o desde el JWT
-    const payload = decodeJwt(data.token);
-    const roleFromToken = payload?.role || null;
-    const role = data.role || roleFromToken || null;
-
+    // data: { token, userId, email, fullName, role? }
     const mappedUser = {
       id: data.userId,
       email: data.email,
       fullName: data.fullName,
-      role, // puede ser "ADMIN", "CUSTOMER", etc.
+      // 👇 si el backend aún no envía role, asumimos CUSTOMER
+      role: data.role || "CUSTOMER",
     };
-
     const next = {
       token: data.token,
       user: mappedUser,
@@ -132,26 +97,21 @@ export function AuthProvider({ children }) {
 
   const getUserId = () => authState.user?.id || null;
 
-  const value = useMemo(() => {
-    const role = authState.user?.role || null;
-    const isAdmin = !!role && role.toUpperCase() === "ADMIN";
-    const isCustomer = !!role && role.toUpperCase() === "CUSTOMER";
-
-    return {
+  const value = useMemo(
+    () => ({
       user,
       token,
-      role,
-      isAdmin,
-      isCustomer,
       isAuthenticated: !!user && !!token,
+      isAdmin: !!user && user.role === "ADMIN", // 👈 NUEVO
       loadingAuth,
       login,
       register,
       logout,
       getToken,
       getUserId,
-    };
-  }, [user, token, loadingAuth]);
+    }),
+    [user, token, loadingAuth]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
