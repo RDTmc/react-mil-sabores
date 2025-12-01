@@ -47,11 +47,26 @@ function getStatusBadgeClass(status) {
 }
 
 export default function AccountPage() {
-  const { user, isAuthenticated, loadingAuth } = useAuth()
+  const { user, isAuthenticated, loadingAuth, updateUserLocal } = useAuth()
+
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // 🔹 Estado de edición del perfil
+  const [isEditing, setIsEditing] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  const [formNombre, setFormNombre] = useState('')
+  const [formTelefono, setFormTelefono] = useState('')
+
+  // Cuando cambie el usuario en contexto, refrescamos el formulario
+  useEffect(() => {
+    setFormNombre(user?.fullName || '')
+    setFormTelefono(user?.phone || '')
+  }, [user])
+
+  // Cargar pedidos del usuario
   useEffect(() => {
     if (loadingAuth) return
 
@@ -96,11 +111,44 @@ export default function AccountPage() {
   }, [orders])
 
   // Datos de perfil “amigables”
-  const nombre = user?.fullName || '—'
+  const nombreMostrado = formNombre || user?.fullName || '—'
   const email = user?.email || '—'
-  const telefono = user?.phone || 'No registrado'
+  const telefonoMostrado = formTelefono || user?.phone || 'No registrado'
   const birthDate = user?.birthDate || null
   const registrationCode = user?.registrationCode || null
+
+  // 🔹 Handlers de edición de perfil
+
+  const handleStartEdit = () => {
+    setIsEditing(true)
+  }
+
+  const handleCancelEdit = () => {
+    // Revertimos a los valores actuales del contexto
+    setFormNombre(user?.fullName || '')
+    setFormTelefono(user?.phone || '')
+    setIsEditing(false)
+  }
+
+  const handleSaveProfile = async () => {
+    // Por ahora actualizamos sólo en el contexto/localStorage.
+    // Más adelante podemos agregar aquí un PUT /api/auth/profile.
+    try {
+      setSavingProfile(true)
+
+      updateUserLocal({
+        fullName: formNombre || user?.fullName || '',
+        phone: formTelefono || null,
+      })
+
+      setIsEditing(false)
+    } catch (err) {
+      console.error('[AccountPage] Error al guardar perfil (frontend):', err)
+      alert('No fue posible actualizar tus datos. Inténtalo más tarde.')
+    } finally {
+      setSavingProfile(false)
+    }
+  }
 
   return (
     <div className="container py-4">
@@ -114,19 +162,45 @@ export default function AccountPage() {
             <div className="card-body">
               <h5 className="card-title">Información personal</h5>
 
+              {/* Nombre */}
               <p className="card-text mb-1">
                 <strong>Nombre completo:</strong><br />
-                {nombre}
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="form-control form-control-sm mt-1"
+                    value={formNombre}
+                    onChange={(e) => setFormNombre(e.target.value)}
+                    placeholder="Tu nombre completo"
+                  />
+                ) : (
+                  nombreMostrado
+                )}
               </p>
+
+              {/* Email (solo lectura) */}
               <p className="card-text mb-1">
                 <strong>Correo electrónico:</strong><br />
                 {email}
               </p>
+
+              {/* Teléfono */}
               <p className="card-text mb-1">
                 <strong>Teléfono de contacto:</strong><br />
-                {telefono}
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="form-control form-control-sm mt-1"
+                    value={formTelefono}
+                    onChange={(e) => setFormTelefono(e.target.value)}
+                    placeholder="Ingresa tu teléfono"
+                  />
+                ) : (
+                  telefonoMostrado
+                )}
               </p>
 
+              {/* Solo lectura por ahora */}
               <p className="card-text mb-1">
                 <strong>Fecha de nacimiento:</strong><br />
                 {birthDate || 'No registrada'}
@@ -137,13 +211,36 @@ export default function AccountPage() {
                 {registrationCode || 'Sin código asociado'}
               </p>
 
-              <button className="btn btn-outline-secondary btn-sm" disabled>
-                Editar datos (próximamente)
-              </button>
+              {/* Botones de edición */}
+              {!isEditing ? (
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={handleStartEdit}
+                >
+                  Editar datos
+                </button>
+              ) : (
+                <div className="d-flex gap-2">
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={handleSaveProfile}
+                    disabled={savingProfile}
+                  >
+                    {savingProfile ? 'Guardando...' : 'Guardar cambios'}
+                  </button>
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={handleCancelEdit}
+                    disabled={savingProfile}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Seguridad y preferencias */}
+          {/* Seguridad y preferencias (placeholder futuro) */}
           <div className="card">
             <div className="card-body">
               <h5 className="card-title">Seguridad y preferencias</h5>
