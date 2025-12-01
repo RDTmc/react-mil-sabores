@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { loginUser, registerUser } from "../lib/apiClient";
 
@@ -20,6 +21,32 @@ function loadInitialState() {
   } catch {
     return { token: null, user: null };
   }
+}
+
+// 🔹 Decodifica el payload del JWT (sin librerías externas)
+function decodeJwtPayload(token) {
+  if (!token) return null;
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(base64);
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+// 🔹 Deducción simple de rol a partir del payload
+function getRoleFromPayload(payload) {
+  if (!payload) return "CUSTOMER";
+  if (payload.role) return String(payload.role).toUpperCase();
+
+  // Por si usas authorities tipo ["ROLE_ADMIN", ...]
+  if (Array.isArray(payload.authorities)) {
+    if (payload.authorities.includes("ROLE_ADMIN")) return "ADMIN";
+  }
+  return "CUSTOMER";
 }
 
 export function AuthProvider({ children }) {
@@ -56,14 +83,21 @@ export function AuthProvider({ children }) {
    */
   const login = async (email, password) => {
     const data = await loginUser({ email, password });
-    // data: { token, userId, email, fullName, role? }
+    // data: { token, userId, email, fullName }
+
+    const payload = decodeJwtPayload(data.token);
+
     const mappedUser = {
-      id: data.userId,
-      email: data.email,
-      fullName: data.fullName,
-      // 👇 si el backend aún no envía role, asumimos CUSTOMER
-      role: data.role || "CUSTOMER",
+      id: data.userId || payload?.sub || null,
+      email: data.email || payload?.email || null,
+      fullName: data.fullName || payload?.fullName || payload?.name || null,
+      phone: payload?.phone || null,
+      role: getRoleFromPayload(payload),
+      // Estos vienen del JWT porque los usamos en ms-orders para promos
+      birthDate: payload?.birthDate || null,
+      registrationCode: payload?.registrationCode || null,
     };
+
     const next = {
       token: data.token,
       user: mappedUser,
@@ -97,20 +131,37 @@ export function AuthProvider({ children }) {
 
   const getUserId = () => authState.user?.id || null;
 
+  // 🔹 Nuevo: actualizar los datos del usuario en memoria/localStorage (sin pegarle al backend por ahora)
+  const updateUserLocal = (partialUser) => {
+    if (!authState.user) return;
+    const mergedUser = {
+      ...authState.user,
+      ...partialUser,
+    };
+    const next = {
+      ...authState,
+      user: mergedUser,
+    };
+    persistAuthState(next);
+  };
+
+  const isAdmin = !!user && String(user.role).toUpperCase() === "ADMIN";
+
   const value = useMemo(
     () => ({
       user,
       token,
       isAuthenticated: !!user && !!token,
-      isAdmin: !!user && user.role === "ADMIN", // 👈 NUEVO
       loadingAuth,
+      isAdmin,
       login,
       register,
       logout,
       getToken,
       getUserId,
+      updateUserLocal, // ⬅️ lo usamos en AccountPage
     }),
-    [user, token, loadingAuth]
+    [user, token, loadingAuth, isAdmin]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

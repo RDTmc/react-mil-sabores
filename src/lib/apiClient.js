@@ -42,7 +42,7 @@ const cartApi = axios.create({
 
 // Cliente para órdenes (ms-orders)
 const ordersApi = axios.create({
-  baseURL: ORDERS_BASE, // ej: http://localhost:8083/api 
+  baseURL: ORDERS_BASE, // ej: http://localhost:8083/api
   timeout: 10000,
 });
 
@@ -59,7 +59,24 @@ function getStoredToken() {
   }
 }
 
-// Interceptor para agregar Authorization: Bearer <token> automáticamente en cartApi
+// ===== Interceptores para agregar Authorization: Bearer <token> =====
+
+// Auth (incluye /admin/users, etc.)
+authApi.interceptors.request.use(
+  (config) => {
+    const token = getStoredToken();
+    if (token) {
+      config.headers = config.headers || {};
+      if (!config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Cart (ms-cart)
 cartApi.interceptors.request.use(
   (config) => {
     const token = getStoredToken();
@@ -74,7 +91,7 @@ cartApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor para agregar Authorization: Bearer <token> en ordersApi
+// Orders (ms-orders)
 ordersApi.interceptors.request.use(
   (config) => {
     const token = getStoredToken();
@@ -147,6 +164,48 @@ export async function registerUser({ email, password, fullName, phone }) {
     phone,
   });
   return data;
+}
+
+/**
+ * ========== ADMIN USERS (ms-usuarios) ==========
+ * Requiere JWT con rol ADMIN.
+ */
+
+// Lista todos los usuarios para el panel admin
+export async function fetchAdminUsers() {
+  if (!AUTH_BASE) {
+    throw new Error("VITE_AUTH_API_URL no está configurada en .env");
+  }
+  const { data } = await authApi.get("/admin/users");
+  // data: List<AuthDtos.AdminUserResponse>
+  return data;
+}
+
+// Actualiza datos básicos de un usuario (fullName, phone, role)
+export async function updateAdminUser(id, { fullName, phone, role }) {
+  if (!AUTH_BASE) {
+    throw new Error("VITE_AUTH_API_URL no está configurada en .env");
+  }
+
+  const body = {
+    fullName,
+    phone,
+    role,
+  };
+
+  const { data } = await authApi.put(`/admin/users/${id}`, body);
+  // data: AdminUserResponse actualizado
+  return data;
+}
+
+// Elimina un usuario por id
+export async function deleteAdminUser(id) {
+  if (!AUTH_BASE) {
+    throw new Error("VITE_AUTH_API_URL no está configurada en .env");
+  }
+
+  await authApi.delete(`/admin/users/${id}`);
+  return true;
 }
 
 // ========== CART (ms-cart) ==========
@@ -222,7 +281,7 @@ export async function createOrder({ paymentMethod, shippingAddress, items }) {
   return data;
 }
 
-// Para más adelante, por si quieres listar órdenes del usuario:
+// Lista órdenes del usuario autenticado
 export async function fetchMyOrders() {
   if (!ORDERS_BASE) {
     throw new Error("VITE_ORDERS_API_URL no está configurada en .env");
@@ -250,4 +309,3 @@ export async function fetchAdminLatestOrders(limit = 5) {
 
   return data; // List<OrderResponse>
 }
-
