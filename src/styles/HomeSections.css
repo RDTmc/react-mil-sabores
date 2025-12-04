@@ -14,68 +14,197 @@
 .ms-brand { color: var(--ms-primary); }
 
 /* =========================================
-   HERO
+   HERO v3 — Slider full-width
 ========================================= */
-/* HERO */
 
 .seccion-principal {
-    text-align: center;
-    position: relative;
-    margin-top: -60px;
+  text-align: center;
+  position: relative;
+  margin-top: -1.52rem;
+  margin-bottom: 10rem;
 }
 
-.contenido-principal {
-    max-width: auto;
-    margin: 0 auto;
-    position: relative;
+/* contenedor general del hero */
+.ms-hero .contenido-principal {
+  width: 100%;
 }
 
-.hero-imagen {
-    width: 100vw;
-    max-width: auto;
-    min-width: 320px;
-    margin: auto;
-    margin-top: 0 !important;
-    position: relative;
+/* slider a ancho completo */
+.ms-hero .hero-imagen {
+  position: relative;
+  width: 100vw;          /* ocupa todo el ancho de la ventana */
+  max-width: 100vw;
+  margin-left: 50%;      /* truco para romper el container */
+  transform: translateX(-50%);
+  height: calc(100vh - 100px); 
+  min-height: 320px;
+  overflow: hidden;
+  background: #fff7e9;
+  
 }
 
-.hero-imagen img.main-img {
-    width: 100%;
-    height: auto;
-    display: block; /* Elimina espacios en blanco debajo de la imagen */
+/* slides */
+.ms-hero .hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.ms-hero .hero-slide-activa {
+  opacity: 1;
+  transform: scale(1);
+}
+.ms-hero .hero-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-.contenido-texto {
-    max-width: 1200px;
-    margin: 0 auto;
-    position: absolute;
-    left: 28%; /* Centramos horizontalmente */
-    top: 45%;
-    transform: translate(-50%, -50%); /* Centramos tanto horizontal como verticalmente */
-    color: #5D4037;
-    z-index: 2;
-    width: 90%; /* Añadimos un ancho para mejor control en dispositivos móviles */
-    padding: 0 20px; /* Añadimos padding lateral para dispositivos pequeños */
+/* degradado por encima de la foto para que el texto destaque */
+.ms-hero .hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(93, 64, 55, 0.45) 0%,
+    rgba(93, 64, 55, 0.28) 35%,
+    rgba(93, 64, 55, 0.06) 70%,
+    rgba(93, 64, 55, 0) 100%
+  );
+  z-index: 1;
 }
 
-.titulo-destacado {
+
+/* zona de texto SIN fondo, solo overlay + sombras */
+.ms-hero .contenido-texto {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(1.6rem, 3vw, 3rem);
+}
+
+/* título con relieve (usa misma fuente que blog: .titulo-principal) */
+.ms-hero .hero-title {
+  margin-bottom: 0.5rem;
+  text-align: left;
+  color: #fffaf0; /* blanco marfil, mejor contraste sobre la foto */
+  text-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.55),
+    0 0 1px rgba(0, 0, 0, 0.7);
+}
+
+
+/* texto secundario también con sombra suave */
+.ms-hero .hero-subtitle,
+.ms-hero .hero-text {
+  color: #fffaf0;
+  text-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+
+/* botones originales, pero un poco más “hero” */
+.ms-hero .fila-acciones {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ms-hero .fila-acciones .btn {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  border-radius: 999px;
+}
+.ms-hero .fila-acciones .btn-dark {
+  padding-inline: 1.5rem;
+}
+.ms-hero .fila-acciones .btn-outline-secondary {
+  border-width: 2px;
+}
+
+/* puntos del slider */
+.ms-hero .hero-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 1.3rem;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  z-index: 3;
+}
+.ms-hero .hero-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, width 0.2s ease;
+}
+.ms-hero .hero-dot-activo {
+  width: 18px;
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ========== Responsive ========== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .ms-hero .contenido-texto {
+    padding: 1.6rem 1.8rem;
+  }
+}
+
+/* Mobile grande */
+@media (max-width: 767px) {
+  .seccion-principal {
     margin-top: 1rem;
-    font-size: 3rem !important;
-    font-family: Pacifico, cursive;
-    margin-bottom: 1rem;
-}
+    margin-bottom: 2rem;
+  }
 
-.contenido-texto p {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-}
+  .ms-hero .hero-imagen {
+    height: 360px;
+  }
 
-.contenido-texto .fila-acciones {
-    margin-top: 2rem;
-    display: flex;
-    justify-content: center;
+  .ms-hero .hero-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(93, 64, 55, 0.88) 0%,
+      rgba(93, 64, 55, 0.55) 40%,
+      rgba(93, 64, 55, 0.15) 80%,
+      rgba(93, 64, 55, 0) 100%
+    );
+  }
+
+  .ms-hero .contenido-texto {
     align-items: center;
-    gap: 1rem;
+    text-align: center;
+  }
+  .ms-hero .hero-title,
+  .ms-hero .hero-subtitle {
+    text-align: center;
+  }
+  .ms-hero .fila-acciones {
+    justify-content: center;
+  }
+}
+
+/* Mobile pequeño */
+@media (max-width: 480px) {
+  .ms-hero .hero-imagen {
+    height: 320px;
+  }
+
+  .ms-hero .hero-subtitle {
+    font-size: 0.98rem;
+  }
 }
 
 

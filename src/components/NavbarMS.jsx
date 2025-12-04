@@ -9,7 +9,6 @@ export default function NavbarMS() {
   const { listaItems, obtenerTotales } = useCarrito();
   const { cantidad } = obtenerTotales(listaItems || []);
 
-  // 👇 ahora también usamos isAdmin
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -19,7 +18,6 @@ export default function NavbarMS() {
       navigate("/", { replace: true });
     } catch (e) {
       // opcional: podrías mostrar un toast
-      // console.error('[Navbar] error al cerrar sesión', e)
     }
   };
 
@@ -28,15 +26,21 @@ export default function NavbarMS() {
   return (
     <nav className="ms-navbar navbar navbar-expand-lg">
       <div className="container">
-        <Link className="navbar-brand brand d-flex align-items-center" to="/">
-          <img
-            src="/img/logo-pasteleria.png"
-            alt="Mil Sabores Logo"
-            className="logo me-2"
-          />
-          <span></span>
+        {/* Brand: logo + nombre + tagline */}
+        <Link
+          className="navbar-brand ms-brand d-flex align-items-center"
+          to="/"
+        >
+          
+          <div className="ms-brand-text">
+            <span className="ms-brand-title">Mil Sabores</span>
+            <span className="ms-brand-tagline">
+              Pastelería artesanal online
+            </span>
+          </div>
         </Link>
 
+        {/* Toggle mobile */}
         <button
           className="navbar-toggler"
           type="button"
@@ -49,36 +53,41 @@ export default function NavbarMS() {
           <span className="navbar-toggler-icon"></span>
         </button>
 
+        {/* Contenido colapsable */}
         <div className="collapse navbar-collapse" id="navMS">
-          <ul className="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/catalogo">
-                Catálogo
-              </NavLink>
-            </li>
-
-            {/* 👇 Link Admin sólo visible para usuarios ADMIN */}
-            {isAuthenticated && isAdmin && (
+          <div className="ms-navbar-main ms-auto d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+            {/* Navegación principal */}
+            <ul className="navbar-nav ms-nav-primary align-items-lg-center gap-lg-2">
               <li className="nav-item">
-                <NavLink className="nav-link" to="/admin">
-                  Admin
+                <NavLink className="nav-link" to="/catalogo">
+                  Catálogo
                 </NavLink>
               </li>
-            )}
 
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/blog">
-                Blog
-              </NavLink>
-            </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/nosotros">
-                Nosotros
-              </NavLink>
-            </li>
+              {isAuthenticated && isAdmin && (
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/admin">
+                    Admin
+                  </NavLink>
+                </li>
+              )}
 
-            {/* Carrito con badge */}
-            <li className="nav-item">
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/blog">
+                  Blog
+                </NavLink>
+              </li>
+
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/nosotros">
+                  Nosotros
+                </NavLink>
+              </li>
+            </ul>
+
+            {/* Acciones: carrito + cuenta + CTA */}
+            <div className="ms-nav-actions">
+              {/* Carrito con badge */}
               <NavLink
                 className="nav-link d-flex align-items-center gap-1 ms-cart-btn"
                 to="/carrito"
@@ -96,12 +105,10 @@ export default function NavbarMS() {
                   </span>
                 )}
               </NavLink>
-            </li>
 
-            {/* Mi Cuenta / Ingresar */}
-            <li className="nav-item d-flex align-items-center">
+              {/* Mi Cuenta / Ingresar */}
               {isAuthenticated ? (
-                <>
+                <div className="d-flex align-items-center ms-account-group">
                   <NavLink
                     className="nav-link d-flex align-items-center gap-1"
                     to="/micuenta"
@@ -111,12 +118,12 @@ export default function NavbarMS() {
                   </NavLink>
                   <button
                     type="button"
-                    className="btn btn-link nav-link ms-2 p-0"
+                    className="btn btn-link nav-link ms-logout-btn p-0 ms-2"
                     onClick={handleLogout}
                   >
                     Salir
                   </button>
-                </>
+                </div>
               ) : (
                 <NavLink
                   className="nav-link d-flex align-items-center gap-1"
@@ -126,8 +133,16 @@ export default function NavbarMS() {
                   <span>Ingresar</span>
                 </NavLink>
               )}
-            </li>
-          </ul>
+
+              {/* CTA principal: Pedir ahora */}
+              <Link
+                to="/catalogo"
+                className="btn btn-pill ms-cta-btn d-flex align-items-center"
+              >
+                Pedir ahora
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </nav>

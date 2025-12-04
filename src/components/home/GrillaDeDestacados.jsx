@@ -20,7 +20,7 @@ export default function GrillaDeDestacados() {
         qty: 1,
         // size: opcional si tu carrito lo usa
       });
-      navigate("/checkout");
+      navigate("/pedido");
     } catch (e) {
       // opcional: podrías usar tu ToastContext aquí si quieres mostrar feedback
       // showToast("No se pudo agregar al carrito");
@@ -70,6 +70,7 @@ export default function GrillaDeDestacados() {
                 src={p.image_path || "/img/placeholder.png"}
                 className="card-img-top"
                 alt={p.name}
+                style={{ height: '200px', objectFit: 'cover' }}
               />
               <div className="card-body d-flex flex-column">
                 <h5 className="card-title">{p.name}</h5>

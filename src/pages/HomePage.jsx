@@ -17,7 +17,7 @@ export default function HomePage() {
   const errorCarga = errorDestacados
 
   return (
-    <div className="py-3">
+    <div className="pb-3">
       <Hero />
       <Benefits />
 

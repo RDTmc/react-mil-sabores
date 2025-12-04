@@ -1,13 +1,25 @@
 
 .ms-navbar {
-  background: rgba(247, 230, 195, 0.8);
-  border-bottom: 1px solid var(--ms-border);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  --nv-bg: #fff;
+  --nv-link: var(--ms-text);
+  --nv-link-active: var(--ms-primary);
+  --nv-border: var(--ms-border);
+
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+
+  background: rgb(255, 250, 235); 
+  border-bottom: 1px solid var(--nv-border);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  height: 100px; 
-  line-height: 100px;
+
+  /* en vez de height/line-height fijas: */
+  padding-block: 0.4rem;      /* arriba/abajo */
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
+
+
 
 .ms-navbar .logo {
   height: 96px;      
@@ -74,6 +86,21 @@
 /* toggle (menú móvil) */
 .navbar-toggler {
   border: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+
+  background-color: rgba(255, 255, 255, 0.95); /* pastito blanco */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Asegura que el ícono se vea bien */
+.navbar-toggler-icon {
+  background-size: 1.35rem 1.35rem;
+  filter: none; /* por si Bootstrap lo invierte con navbar-dark */
 }
 .navbar-toggler:focus {
   box-shadow: 0 0 0 2px var(--ms-accent);
@@ -86,5 +113,303 @@
   }
   .ms-navbar .navbar-nav {
     text-align: center;
+  }
+}
+
+/* ===== Rediseño Navbar Mil Sabores (Propuesta 1) ===== */
+
+/* Brand: texto al lado del logo */
+.ms-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.ms-brand-title {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  color: var(--ms-primary);
+}
+
+.ms-brand-tagline {
+  font-size: 0.9rem;
+  color: var(--ms-text);
+}
+
+/* Contenedor principal dentro del collapse */
+.ms-navbar-main {
+  width: 100%;
+}
+
+/* En mobile se apila; en desktop se alinea en fila */
+@media (max-width: 991.98px) {
+  .ms-navbar-main {
+    margin-top: 0.75rem;
+  }
+}
+
+/* Bloque de acciones (carrito + cuenta + CTA) */
+.ms-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+/* Grupo cuenta + salir para que quede compacto */
+.ms-account-group .nav-link {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.ms-logout-btn {
+  color: var(--ms-text-dim);
+}
+.ms-logout-btn:hover {
+  color: var(--ms-primary);
+}
+
+/* CTA principal “Pedir ahora” usando el estilo pill global */
+.ms-cta-btn {
+  font-size: 0.9rem;
+  padding: 0.45rem 1rem;
+  white-space: nowrap;
+}
+
+.ms-cta-btn:hover { background: var(--ms-bg); border-color: var(--ms-brown-600); }
+
+/* En pantallas pequeñas, que el CTA pueda ocupar el ancho y se vea como botón principal */
+@media (max-width: 575.98px) {
+  .ms-nav-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ms-cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* === BRAND: logo + texto con estilo tipo Blog === */
+
+.ms-brand {
+  gap: 0.75rem; /* aire entre logo y textos */
+}
+
+.ms-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+/* Título estilo "Blog" pero versión compacta para navbar */
+.ms-brand-title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: #e85d75; /* mismo tono rosado del Blog */
+  letter-spacing: 0.5px;
+  position: relative;
+  display: inline-block;
+}
+
+.ms-brand-title::after {
+  content: "";
+  display: block;
+  width: 70px;
+  height: 4px;
+  margin-top: 0.2rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e85d75, #ffc857);
+}
+
+.ms-brand-tagline {
+  font-size: 0.8rem;
+  color: var(--ms-text-dim);
+}
+
+/* === Centrado de navegación (Catálogo / Blog / Nosotros) === */
+
+.ms-navbar-main {
+  align-items: center;
+}
+
+.ms-nav-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+@media (min-width: 992px) {
+  .ms-nav-primary {
+    flex: 1 1 auto;
+    justify-content: center; /* centra los links en el espacio central */
+  }
+
+  .ms-nav-actions {
+    margin-left: 1.5rem; /* separa acciones del menú central */
+  }
+}
+
+/* === Hover limpio, sin elipse gigante === */
+
+.ms-navbar .nav-link {
+  position: relative;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+/* Subrayado degradé suave bajo el texto */
+.ms-navbar .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0.1rem;
+  width: 0;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e85d75, #ffc857);
+  transition: width 0.2s ease;
+}
+
+/* Quitamos el fondo pill en hover, solo cambiamos color + subrayado */
+.ms-navbar .nav-link:hover {
+  color: var(--ms-primary);
+  background-color: transparent;
+  transform: none;
+}
+
+/* Activo = mismo estilo que hover + subrayado más largo */
+.ms-navbar .nav-link.active {
+  color: var(--ms-primary) !important;
+  background-color: transparent;
+}
+
+.ms-navbar .nav-link:hover::after,
+.ms-navbar .nav-link.active::after {
+  width: 70%;
+}
+
+/* TABLET (1024px - 768px) */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .ms-navbar .navbar-collapse {
+    background: #fffdf8;
+    border-radius: 18px;
+    margin-top: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+  }
+
+  .ms-navbar .navbar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0.35rem;
+    text-align: right;
+  }
+
+  .ms-navbar .nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.9rem;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* MOBILE PEQUEÑO (479px - 320px) */
+@media (max-width: 479px) {
+  .ms-navbar .navbar-collapse {
+    background: #fffdf8;
+    border-radius: 16px;
+    margin-top: 0.6rem;
+    padding: 0.75rem 0.9rem 0.9rem;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+  }
+
+  .ms-navbar .navbar-nav {
+    flex-direction: column;
+    align-items: center;
+    row-gap: 0.35rem;
+    text-align: center;
+  }
+
+  .ms-navbar .nav-link {
+    display: block;
+    width: 100%;
+    max-width: 230px;
+    margin-inline: auto;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* ===== Menú móvil (<= 767px) ===== */
+@media (max-width: 767px) {
+
+  /* El contenedor del menú desplegado (la “tarjeta” blanca) */
+  .ms-navbar .navbar-collapse.show {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+    padding: 1.3rem 1.5rem 1.5rem;
+    margin-top: 0.75rem;
+  }
+
+  /* Lista de enlaces → columna centrada */
+  .ms-navbar .navbar-nav {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+  }
+
+  /* Cada item ocupa ancho completo pero centra su contenido */
+  .ms-navbar .nav-item {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Links e items tipo botón (incluye carrito e ingresar) */
+  .ms-navbar .nav-item > .nav-link.d-flex,
+  .ms-navbar .nav-item > .btn-link.d-flex {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 160px;
+    max-width: 260px;
+    margin-inline: auto;
+    padding-block: 0.4rem;
+  }
+
+  /* Pequeño ajuste al carrito para que el badge no desplace nada raro */
+  .ms-navbar .ms-cart-btn {
+    justify-content: center;
+  }
+
+  /* CTA "Pedir ahora" dentro del menú */
+  .ms-navbar .ms-navbar-cta {
+    width: 100%;
+    margin-top: 1.1rem;
+    display: flex;
+    justify-content: center;
+  }
+  .ms-navbar .ms-navbar-cta .btn-pill {
+    width: 100%;
+    max-width: 260px;
+    margin-inline: auto;
   }
 }
