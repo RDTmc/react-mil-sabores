@@ -142,8 +142,9 @@ export default function AdminDashboardPage() {
 
   // Redirección suave si NO está logueado
   if (!loadingAuth && !isAuthenticated) {
-    return <Navigate to="/login?next=/admin" replace />
+  return <Navigate to="/login?next=/admin/panel" replace />
   }
+
 
   // Métricas básicas para las tarjetas (KPIs)
   const metrics = useMemo(() => {

@@ -56,17 +56,55 @@ export function ProveedorCarrito({ children }) {
       try {
         setLoadingCarrito(true)
         setErrorCarrito(null)
-        const cart = await fetchCartApi(userId)
+
+        // 1) Leer carrito invitado desde localStorage
+        let guestItems = []
+        try {
+          const raw = window.localStorage.getItem(STORAGE_KEY)
+          guestItems = raw ? JSON.parse(raw) : []
+        } catch {
+          guestItems = []
+        }
+
+        let cartResponse = null
+
+        if (guestItems && guestItems.length > 0) {
+          // 2) Migrar items de invitado → ms-cart
+          for (const item of guestItems) {
+            const payload = {
+              productId: String(item.id),
+              productName: item.name,
+              image: null, // si quieres, puedes guardar también imagePath aquí
+              unitPrice: Number(item.price),
+              quantity: Number(item.qty),
+              size: item.size ?? null,
+              flavor: null,
+            }
+            // Cada addCartItem devuelve el carrito actualizado
+            cartResponse = await addCartItemApi(userId, payload)
+          }
+
+          // 3) Limpiar carrito invitado de localStorage
+          window.localStorage.removeItem(STORAGE_KEY)
+        } else {
+          // No había carrito invitado → solo leemos el backend
+          cartResponse = await fetchCartApi(userId)
+        }
+
         if (!activo) return
-        setListaItems(mapCartResponseToItems(cart))
+
+        if (cartResponse) {
+          setListaItems(mapCartResponseToItems(cartResponse))
+        }
       } catch (err) {
         if (!activo) return
-        console.error('[Cart] Error al cargar carrito desde ms-cart:', err)
+        console.error('[Cart] Error al sincronizar carrito con backend:', err)
         setErrorCarrito(
           err?.response?.data?.message ||
             err?.message ||
-            'No se pudo cargar el carrito.'
+            'No se pudo sincronizar el carrito.'
         )
+        // Importante: si hay error, NO tocamos listaItems para no perder el carrito que ya ve el usuario
       } finally {
         if (activo) setLoadingCarrito(false)
       }
@@ -76,6 +114,7 @@ export function ProveedorCarrito({ children }) {
       activo = false
     }
   }, [userId])
+
 
   // Solo persistimos en localStorage cuando NO hay usuario logeado
   useEffect(() => {
